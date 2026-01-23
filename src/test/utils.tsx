@@ -38,7 +38,7 @@ export function createWrapper(options: WrapperOptions = {}) {
   return function Wrapper({ children }: { children: ReactNode }): ReactElement {
     return (
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter {...options.routerProps}>
+        <MemoryRouter {...(options.routerProps ?? {})}>
           {children}
         </MemoryRouter>
       </QueryClientProvider>
