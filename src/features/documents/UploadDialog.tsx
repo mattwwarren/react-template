@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -59,38 +59,42 @@ export function UploadDialog({
     },
   });
 
-  const onSubmit = (data: UploadFormData): void => {
-    const files = fileInputRef.current?.files;
-    if (!files || files.length === 0) {
-      toast.error('Please select a file');
-      return;
-    }
+  const onFormSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>): void => {
+      event.preventDefault();
+      void form.handleSubmit((data: UploadFormData) => {
+        const files = fileInputRef.current?.files;
+        if (!files || files.length === 0) {
+          toast.error('Please select a file');
+          return;
+        }
 
-    const file = files[0];
-    if (!file) {
-      toast.error('Please select a file');
-      return;
-    }
+        const file = files[0];
+        if (!file) {
+          toast.error('Please select a file');
+          return;
+        }
 
-    uploadMutation.mutate(
-      { file, organizationId: data.organizationId },
-      {
-        onSuccess: () => {
-          toast.success('Document uploaded successfully');
-          onOpenChange(false);
-          form.reset();
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+        uploadMutation.mutate(
+          { file, organizationId: data.organizationId },
+          {
+            onSuccess: () => {
+              toast.success('Document uploaded successfully');
+              onOpenChange(false);
+              form.reset();
+              if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+              }
+            },
+            onError: (error) => {
+              toast.error(error.message);
+            },
           }
-        },
-        onError: (error) => {
-          toast.error(error.message);
-        },
-      }
-    );
-  };
-
-  const handleFormSubmit = form.handleSubmit(onSubmit);
+        );
+      })();
+    },
+    [toast, uploadMutation, onOpenChange, form]
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -102,7 +106,7 @@ export function UploadDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={handleFormSubmit} className="space-y-4">
+          <form onSubmit={onFormSubmit} className="space-y-4">
             <FormField
               control={form.control}
               name="organizationId"
