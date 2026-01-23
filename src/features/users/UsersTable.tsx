@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,18 +10,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { DataTable } from '@/components/shared';
-import { useDeleteUser, useToast } from '@/hooks';
+import { DataTable, DeleteConfirmDialog } from '@/components/shared';
+import { useDeleteUser, useToast, userKeys } from '@/hooks';
+import { usersApi } from '@/api';
 import { UserDialog } from './UserDialog';
 import type { User } from '@/api/types';
 
@@ -30,13 +22,23 @@ interface UsersTableProps {
 }
 
 export function UsersTable({ data, isLoading }: UsersTableProps): React.ReactElement {
-  const columns = [
+  const queryClient = useQueryClient();
+
+  const handlePrefetch = useCallback((id: string): void => {
+    void queryClient.prefetchQuery({
+      queryKey: userKeys.detail(id),
+      queryFn: () => usersApi.get(id),
+    });
+  }, [queryClient]);
+
+  const columns = useMemo(() => [
     {
       header: 'Name',
       accessor: (user: User) => (
         <Link
           to={`/users/${user.id}`}
           className="font-medium hover:underline"
+          onMouseEnter={() => handlePrefetch(user.id)}
         >
           {user.name}
         </Link>
@@ -68,7 +70,7 @@ export function UsersTable({ data, isLoading }: UsersTableProps): React.ReactEle
       accessor: (user: User) => <UserActions user={user} />,
       className: 'w-[50px]',
     },
-  ];
+  ], [handlePrefetch]);
 
   return (
     <DataTable
@@ -131,26 +133,14 @@ function UserActions({ user }: { user: User }): React.ReactElement {
 
       <UserDialog open={isEditOpen} onOpenChange={setIsEditOpen} user={user} />
 
-      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete User</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {user.name}? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        title="Delete User"
+        description={`Are you sure you want to delete ${user.name}? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        isPending={deleteMutation.isPending}
+      />
     </>
   );
 }

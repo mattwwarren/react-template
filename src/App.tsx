@@ -1,13 +1,17 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { Toaster } from '@/components/ui/sonner';
-import { ErrorBoundary } from '@/components/shared';
+import { ErrorBoundary, LoadingSpinner } from '@/components/shared';
 import { Layout } from '@/components/layout';
-import { DashboardPage } from '@/features/dashboard';
-import { UsersPage, UserDetailPage } from '@/features/users';
-import { OrganizationsPage, OrganizationDetailPage } from '@/features/organizations';
-import { DocumentsPage } from '@/features/documents';
-import { NotFoundPage } from '@/features/not-found';
+
+const DashboardPage = lazy(() => import('@/features/dashboard').then(m => ({ default: m.DashboardPage })));
+const UsersPage = lazy(() => import('@/features/users').then(m => ({ default: m.UsersPage })));
+const UserDetailPage = lazy(() => import('@/features/users').then(m => ({ default: m.UserDetailPage })));
+const OrganizationsPage = lazy(() => import('@/features/organizations').then(m => ({ default: m.OrganizationsPage })));
+const OrganizationDetailPage = lazy(() => import('@/features/organizations').then(m => ({ default: m.OrganizationDetailPage })));
+const DocumentsPage = lazy(() => import('@/features/documents').then(m => ({ default: m.DocumentsPage })));
+const NotFoundPage = lazy(() => import('@/features/not-found').then(m => ({ default: m.NotFoundPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,15 +28,66 @@ function App(): React.ReactElement {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Layout>
-            <Routes>
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/users" element={<UsersPage />} />
-              <Route path="/users/:id" element={<UserDetailPage />} />
-              <Route path="/organizations" element={<OrganizationsPage />} />
-              <Route path="/organizations/:id" element={<OrganizationDetailPage />} />
-              <Route path="/documents" element={<DocumentsPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+            <Suspense fallback={<div className="flex h-screen items-center justify-center"><LoadingSpinner /></div>}>
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <ErrorBoundary>
+                      <DashboardPage />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/users"
+                  element={
+                    <ErrorBoundary>
+                      <UsersPage />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/users/:id"
+                  element={
+                    <ErrorBoundary>
+                      <UserDetailPage />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/organizations"
+                  element={
+                    <ErrorBoundary>
+                      <OrganizationsPage />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/organizations/:id"
+                  element={
+                    <ErrorBoundary>
+                      <OrganizationDetailPage />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/documents"
+                  element={
+                    <ErrorBoundary>
+                      <DocumentsPage />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="*"
+                  element={
+                    <ErrorBoundary>
+                      <NotFoundPage />
+                    </ErrorBoundary>
+                  }
+                />
+              </Routes>
+            </Suspense>
           </Layout>
         </BrowserRouter>
         <Toaster />

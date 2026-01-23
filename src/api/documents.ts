@@ -1,4 +1,4 @@
-import { fetchApi } from './client';
+import { fetchApi, API_BASE_URL } from './client';
 import type { Document } from './types';
 
 export const documentsApi = {
@@ -7,8 +7,7 @@ export const documentsApi = {
     formData.append('file', file);
     formData.append('organization_id', organizationId);
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    const response = await fetch(`${apiUrl}/documents`, {
+    const response = await fetch(`${API_BASE_URL}/documents`, {
       method: 'POST',
       body: formData, // No Content-Type header - browser sets it with boundary
     });
@@ -27,7 +26,6 @@ export const documentsApi = {
     fetchApi<void>(`/documents/${id}`, { method: 'DELETE' }),
 
   getDownloadUrl: (id: string) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    return `${apiUrl}/documents/${id}`;
+    return `${API_BASE_URL}/documents/${id}`;
   },
 };

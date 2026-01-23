@@ -1,13 +1,6 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Users, Building2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const navigation = [
-  { name: 'Dashboard', to: '/', icon: Home },
-  { name: 'Users', to: '/users', icon: Users },
-  { name: 'Organizations', to: '/organizations', icon: Building2 },
-  { name: 'Documents', to: '/documents', icon: FileText },
-];
+import { navigation } from './navigation';
 
 export function Sidebar(): React.ReactElement {
   return (

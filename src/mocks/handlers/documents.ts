@@ -30,8 +30,17 @@ export const documentHandlers = [
     return HttpResponse.json(doc, { status: 201 })
   }),
 
-  // Download (returns mock file content)
+  // Get metadata
   http.get('*/documents/:id', ({ params }) => {
+    const doc = documents.find((d) => d.id === params.id)
+    if (!doc) {
+      return new HttpResponse(null, { status: 404 })
+    }
+    return HttpResponse.json(doc)
+  }),
+
+  // Download (returns mock file content)
+  http.get('*/documents/:id/download', ({ params }) => {
     const doc = documents.find((d) => d.id === params.id)
     if (!doc) {
       return new HttpResponse(null, { status: 404 })

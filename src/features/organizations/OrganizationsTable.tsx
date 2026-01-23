@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,18 +10,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { DataTable } from '@/components/shared';
-import { useDeleteOrganization, useToast } from '@/hooks';
+import { DataTable, DeleteConfirmDialog } from '@/components/shared';
+import { useDeleteOrganization, useToast, organizationKeys } from '@/hooks';
+import { organizationsApi } from '@/api';
 import { OrganizationDialog } from './OrganizationDialog';
 import type { Organization } from '@/api/types';
 
@@ -33,13 +25,23 @@ export function OrganizationsTable({
   data,
   isLoading,
 }: OrganizationsTableProps): React.ReactElement {
-  const columns = [
+  const queryClient = useQueryClient();
+
+  const handlePrefetch = useCallback((id: string): void => {
+    void queryClient.prefetchQuery({
+      queryKey: organizationKeys.detail(id),
+      queryFn: () => organizationsApi.get(id),
+    });
+  }, [queryClient]);
+
+  const columns = useMemo(() => [
     {
       header: 'Name',
       accessor: (org: Organization) => (
         <Link
           to={`/organizations/${org.id}`}
           className="font-medium hover:underline"
+          onMouseEnter={() => handlePrefetch(org.id)}
         >
           {org.name}
         </Link>
@@ -61,7 +63,7 @@ export function OrganizationsTable({
       accessor: (org: Organization) => <OrganizationActions organization={org} />,
       className: 'w-[50px]',
     },
-  ];
+  ], [handlePrefetch]);
 
   return (
     <DataTable
@@ -132,26 +134,14 @@ function OrganizationActions({
         organization={organization}
       />
 
-      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Organization</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {organization.name}? This will
-              remove all members and cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        title="Delete Organization"
+        description={`Are you sure you want to delete ${organization.name}? This will remove all members and cannot be undone.`}
+        onConfirm={handleDelete}
+        isPending={deleteMutation.isPending}
+      />
     </>
   );
 }
