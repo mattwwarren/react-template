@@ -1,0 +1,141 @@
+version: v2beta1
+name: "react_template"
+
+vars:
+  CLUSTER_NAME:
+    default: "react_template"
+    source: env
+  NAMESPACE:
+    default: warren-enterprises-ltd
+    source: env
+  IMAGE_NAME:
+    default: "react_template"
+    source: env
+  IMAGE_TAG:
+    default: dev
+    source: env
+  APP_NAME:
+    default: "react_template"
+    source: env
+  ENVIRONMENT:
+    default: dev
+    source: env
+  # API URL for backend service (in-cluster or external)
+  API_URL:
+    default: "http://fastapi-template.warren-enterprises-ltd.svc.cluster.local"
+    source: env
+
+images:
+  app:
+    image: ${IMAGE_NAME}
+    tags:
+      - ${IMAGE_TAG}
+    dockerfile: ./docker/Dockerfile
+    target: dev
+    skipPush: true
+
+pipelines:
+  deploy:
+    run: |-
+      bash scripts/k3d-up.sh
+      export KUBECONFIG="$(k3d kubeconfig write ${CLUSTER_NAME})"
+      kubectl config use-context "k3d-${CLUSTER_NAME}"
+      for _ in $(seq 1 30); do
+        if kubectl get namespaces >/dev/null 2>&1; then
+          break
+        fi
+        sleep 1
+      done
+      create_deployments --all
+  dev:
+    run: |-
+      bash scripts/k3d-up.sh
+      export KUBECONFIG="$(k3d kubeconfig write ${CLUSTER_NAME})"
+      kubectl config use-context "k3d-${CLUSTER_NAME}"
+      for _ in $(seq 1 30); do
+        if kubectl get namespaces >/dev/null 2>&1; then
+          break
+        fi
+        sleep 1
+      done
+      create_deployments --all
+      start_dev --all
+
+dev:
+  ui:
+    namespace: ${NAMESPACE}
+    imageSelector: ${runtime.images.app.image}:${runtime.images.app.tag}
+    ports:
+      - port: "5173"
+    sync:
+      - path: ./src:/app/src
+        excludeFile: .gitignore
+      - path: ./public:/app/public
+        excludeFile: .gitignore
+      - path: ./index.html:/app/index.html
+        file: true
+
+hooks: []
+
+commands:
+  build-prod:
+    description: "Build production Docker image"
+    command: bash
+    args:
+      - -c
+      - |
+        docker build -f docker/Dockerfile --target prod -t ${IMAGE_NAME}:prod .
+  k3d-down:
+    description: "Delete the local k3d cluster"
+    command: bash
+    args:
+      - -c
+      - |
+        bash scripts/k3d-down.sh
+
+# Deployment definitions
+
+deployments:
+  app:
+    namespace: ${NAMESPACE}
+    helm:
+      chart:
+        name: component-chart
+        repo: https://charts.devspace.sh
+      values:
+        containers:
+          - name: ui
+            image: ${runtime.images.app.image}:${runtime.images.app.tag}
+            imagePullPolicy: IfNotPresent
+            ports:
+              - containerPort: "5173"
+            env:
+              - name: NODE_ENV
+                value: development
+              - name: VITE_API_URL
+                value: ${API_URL}
+              - name: VITE_USE_MOCKS
+                value: "false"
+            readinessProbe:
+              httpGet:
+                path: /
+                port: "5173"
+              initialDelaySeconds: 10
+              periodSeconds: 10
+            livenessProbe:
+              httpGet:
+                path: /
+                port: "5173"
+              initialDelaySeconds: 15
+              periodSeconds: 20
+            resources:
+              requests:
+                cpu: "100m"
+                memory: "256Mi"
+              limits:
+                cpu: "500m"
+                memory: "512Mi"
+        service:
+          ports:
+            - port: 80
+              targetPort: 5173

@@ -4,7 +4,8 @@ React UI template for consuming FastAPI backends. Reference implementation demon
 
 ## Project Status
 
-**Current Phase:** Not started - scaffolding pending
+**Completed:** Phase 1 (Scaffolding), Phase 2 (OpenAPI Types), Phase 3 (Faker Factories), Phase 4 (MSW Handlers)
+**Current Phase:** Phase 5 (DevOps - Docker & DevSpace)
 **Plan:** `~/.claude/plans/react-template/main.md`
 
 ## Technology Stack
@@ -29,8 +30,8 @@ React UI template for consuming FastAPI backends. Reference implementation demon
 npm run dev           # Start with real API (http://localhost:8000)
 npm run dev:mock      # Start with MSW mocks (no backend needed)
 
-# Type generation (requires backend running)
-npm run generate:types
+# Type generation (uses shared spec - no backend needed)
+npm run generate:types  # Reads from ../specs/openapi.json
 
 # Testing
 npm test              # Vitest unit tests
@@ -90,13 +91,11 @@ src/
 
 ### Type-Safe API Calls
 
-Always use generated types from OpenAPI:
+Use type aliases from `@/api/types` (wraps generated types):
 
 ```typescript
-import type { components } from '@/api/generated/types';
-
-type User = components['schemas']['UserRead'];
-type UserCreate = components['schemas']['UserCreate'];
+import type { User, UserCreate, PaginatedUsers } from '@/api/types';
+// Aliases map to: components['schemas']['UserRead'], etc.
 
 // TanStack Query with typed responses
 const { data } = useQuery<PaginatedResponse<User>>({
@@ -121,42 +120,51 @@ const userSchema = z.object({
 
 ### Mock Data Factories
 
-Use seeded Faker for reproducible test data:
+Factories in `src/mocks/factories/` - seeded (12345) for reproducible data:
 
 ```typescript
-import { faker } from '@/mocks/factories';
+// Individual factories
+import { createUser, createOrganization, createMembership, createDocument } from '@/mocks/factories';
 
-// Faker is seeded globally - same data every run
-export function createUser(overrides?: Partial<User>): User {
-  return {
-    id: faker.string.uuid(),
-    email: faker.internet.email(),
-    name: faker.person.fullName(),
-    ...overrides,
-  };
-}
+// Pre-generated dataset with relationships
+import { mockUsers, mockOrganizations, mockMemberships, mockDocuments } from '@/mocks/factories';
+// 25 users, 5 orgs, 25 memberships (linked), 50 documents
 ```
 
 ### MSW Handlers
 
-Mock API responses for development and testing:
+Mock API responses for development and testing. Handlers support full CRUD with mutable state:
 
 ```typescript
 import { http, HttpResponse } from 'msw';
+import { mockUsers, createUser } from '../factories';
+
+// Mutable copy for CRUD operations
+let users = [...mockUsers];
 
 export const userHandlers = [
+  // List (paginated)
   http.get('*/users', ({ request }) => {
     const url = new URL(request.url);
-    const skip = parseInt(url.searchParams.get('skip') || '0');
-    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const size = parseInt(url.searchParams.get('size') || '10');
+    const start = (page - 1) * size;
 
     return HttpResponse.json({
-      items: mockUsers.slice(skip, skip + limit),
-      total: mockUsers.length,
-      page: Math.floor(skip / limit) + 1,
-      size: limit,
-      pages: Math.ceil(mockUsers.length / limit),
+      items: users.slice(start, start + size),
+      total: users.length,
+      page,
+      size,
+      pages: Math.ceil(users.length / size),
     });
+  }),
+
+  // Create
+  http.post('*/users', async ({ request }) => {
+    const body = await request.json();
+    const user = createUser({ ...body });
+    users.push(user);
+    return HttpResponse.json(user, { status: 201 });
   }),
 ];
 ```
@@ -232,7 +240,8 @@ Template variables:
 
 - Main plan: `~/.claude/plans/react-template/main.md`
 - Backend template: `/home/matthew/workspace/meta-work/fastapi-template`
-- API spec: `http://localhost:8000/openapi.json` (when backend running)
+- Shared OpenAPI spec: `../specs/openapi.json` (exported by fastapi-template)
+- Pre-seeded mock dataset: `src/mocks/factories/dataset.ts` (25 users, 5 orgs, 50 docs)
 
 ## Key Conventions
 
