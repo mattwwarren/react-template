@@ -1,6 +1,17 @@
 import { http, HttpResponse } from 'msw'
+import { z } from 'zod'
 import { mockUsers, createUser } from '../factories'
-import type { UserCreate, UserUpdate } from '@/api/types'
+
+// Validation schemas for request bodies
+const UserCreateSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
+})
+
+const UserUpdateSchema = z.object({
+  email: z.string().email('Invalid email address').optional(),
+  name: z.string().min(1, 'Name is required').max(100, 'Name too long').optional(),
+})
 
 // Mutable copy for CRUD operations
 let users = [...mockUsers]
@@ -33,8 +44,17 @@ export const userHandlers = [
 
   // Create
   http.post('*/users', async ({ request }) => {
-    const body = (await request.json()) as UserCreate
-    const user = createUser({ ...body })
+    const body = await request.json()
+    const result = UserCreateSchema.safeParse(body)
+
+    if (!result.success) {
+      return HttpResponse.json(
+        { detail: result.error.issues.map((i) => ({ loc: [i.path[0]], msg: i.message })) },
+        { status: 422 }
+      )
+    }
+
+    const user = createUser({ ...result.data })
     users.push(user)
     return HttpResponse.json(user, { status: 201 })
   }),
@@ -45,13 +65,23 @@ export const userHandlers = [
     if (idx === -1) {
       return new HttpResponse(null, { status: 404 })
     }
-    const body = (await request.json()) as UserUpdate
+
+    const body = await request.json()
+    const result = UserUpdateSchema.safeParse(body)
+
+    if (!result.success) {
+      return HttpResponse.json(
+        { detail: result.error.issues.map((i) => ({ loc: [i.path[0]], msg: i.message })) },
+        { status: 422 }
+      )
+    }
+
     // Non-null assertion safe: idx !== -1 check above guarantees element exists
     const current = users[idx]!
     users[idx] = {
       id: current.id,
-      email: body.email ?? current.email,
-      name: body.name ?? current.name,
+      email: result.data.email ?? current.email,
+      name: result.data.name ?? current.name,
       created_at: current.created_at,
       updated_at: new Date().toISOString(),
       ...(current.organizations && { organizations: current.organizations }),

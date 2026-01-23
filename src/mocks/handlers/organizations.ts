@@ -1,6 +1,15 @@
 import { http, HttpResponse } from 'msw'
+import { z } from 'zod'
 import { mockOrganizations, createOrganization } from '../factories'
-import type { OrganizationCreate, OrganizationUpdate } from '@/api/types'
+
+// Validation schemas for request bodies
+const OrganizationCreateSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
+})
+
+const OrganizationUpdateSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100, 'Name too long').optional(),
+})
 
 // Mutable copy for CRUD operations
 let organizations = [...mockOrganizations]
@@ -33,8 +42,17 @@ export const organizationHandlers = [
 
   // Create
   http.post('*/organizations', async ({ request }) => {
-    const body = (await request.json()) as OrganizationCreate
-    const org = createOrganization({ ...body })
+    const body = await request.json()
+    const result = OrganizationCreateSchema.safeParse(body)
+
+    if (!result.success) {
+      return HttpResponse.json(
+        { detail: result.error.issues.map((i) => ({ loc: [i.path[0]], msg: i.message })) },
+        { status: 422 }
+      )
+    }
+
+    const org = createOrganization({ ...result.data })
     organizations.push(org)
     return HttpResponse.json(org, { status: 201 })
   }),
@@ -45,12 +63,22 @@ export const organizationHandlers = [
     if (idx === -1) {
       return new HttpResponse(null, { status: 404 })
     }
-    const body = (await request.json()) as OrganizationUpdate
+
+    const body = await request.json()
+    const result = OrganizationUpdateSchema.safeParse(body)
+
+    if (!result.success) {
+      return HttpResponse.json(
+        { detail: result.error.issues.map((i) => ({ loc: [i.path[0]], msg: i.message })) },
+        { status: 422 }
+      )
+    }
+
     // Non-null assertion safe: idx !== -1 check above guarantees element exists
     const current = organizations[idx]!
     organizations[idx] = {
       id: current.id,
-      name: body.name ?? current.name,
+      name: result.data.name ?? current.name,
       created_at: current.created_at,
       updated_at: new Date().toISOString(),
       ...(current.users && { users: current.users }),
