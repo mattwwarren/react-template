@@ -90,6 +90,8 @@ export function UploadDialog({
     );
   };
 
+  const handleFormSubmit = form.handleSubmit(onSubmit);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -100,7 +102,7 @@ export function UploadDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleFormSubmit} className="space-y-4">
             <FormField
               control={form.control}
               name="organizationId"
