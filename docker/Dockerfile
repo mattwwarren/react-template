@@ -33,27 +33,37 @@ RUN npm run build
 # ============================================================================
 FROM nginx:alpine AS prod
 
-# Create non-root user for security
-RUN addgroup -S app && adduser -S app -G app
+# Create non-root user
+RUN addgroup -g 1000 app && adduser -u 1000 -G app -s /bin/sh -D app
 
-# Copy nginx configuration
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom main nginx config (for non-root pid file location)
+COPY docker/nginx-main.conf /etc/nginx/nginx.conf
 
-# Copy built assets from build stage
+# Copy server config as template (for envsubst processing)
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf.template
+
+# Copy built assets
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Set ownership
+# Copy entrypoint script
+COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Set permissions for non-root user
 RUN chown -R app:app /usr/share/nginx/html && \
     chown -R app:app /var/cache/nginx && \
     chown -R app:app /var/log/nginx && \
-    touch /var/run/nginx.pid && \
-    chown -R app:app /var/run/nginx.pid
+    touch /tmp/nginx.pid && \
+    chown app:app /tmp/nginx.pid && \
+    # Allow nginx to write to conf.d
+    chown -R app:app /etc/nginx/conf.d
 
-# Health check endpoint
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
-  CMD wget -q --spider http://localhost/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-EXPOSE 80
+EXPOSE 8080
 
-# Run as non-root (nginx needs to start as root briefly, then drops privileges)
-CMD ["nginx", "-g", "daemon off;"]
+USER app
+
+ENTRYPOINT ["/docker-entrypoint.sh"]

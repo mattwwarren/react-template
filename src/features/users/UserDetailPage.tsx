@@ -185,3 +185,5 @@ export function UserDetailPage(): React.ReactElement {
     </div>
   );
 }
+
+export default UserDetailPage;

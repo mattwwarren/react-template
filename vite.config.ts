@@ -22,8 +22,17 @@ export default defineConfig({
     },
   },
   build: {
-    sourcemap: true,
+    sourcemap: false,
     rollupOptions: {
+      // Mark optional auth SDKs as external - they are installed conditionally
+      // based on the selected auth provider during project generation
+      external: [
+        '@ory/client-fetch',
+        '@auth0/auth0-react',
+        'keycloak-js',
+        'aws-amplify',
+        'aws-amplify/auth',
+      ],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],

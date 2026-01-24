@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { waitFor } from '@testing-library/react'
 import { useDocument, useUploadDocument, useDeleteDocument, documentKeys } from '../useDocuments'
 import { renderHookWithProviders } from '@/test/utils'

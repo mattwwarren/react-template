@@ -2,8 +2,10 @@ import { userHandlers, resetUsers } from './users'
 import { organizationHandlers, resetOrganizations } from './organizations'
 import { membershipHandlers, resetMemberships } from './memberships'
 import { documentHandlers, resetDocuments } from './documents'
+import { authHandlers, resetAuth } from './auth'
 
 export const handlers = [
+  ...authHandlers,
   ...userHandlers,
   ...organizationHandlers,
   ...membershipHandlers,
@@ -11,7 +13,8 @@ export const handlers = [
 ]
 
 // Reset all handlers to initial state (for test isolation)
-export function resetAllHandlers() {
+export function resetAllHandlers(): void {
+  resetAuth()
   resetUsers()
   resetOrganizations()
   resetMemberships()
@@ -19,4 +22,4 @@ export function resetAllHandlers() {
 }
 
 // Re-export individual reset functions for granular control
-export { resetUsers, resetOrganizations, resetMemberships, resetDocuments }
+export { resetAuth, resetUsers, resetOrganizations, resetMemberships, resetDocuments }

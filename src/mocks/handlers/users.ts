@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { z } from 'zod'
 import { mockUsers, createUser } from '../factories'
+import { extractPaginationFromUrl, paginateArray } from './utils'
 
 // Validation schemas for request bodies
 const UserCreateSchema = z.object({
@@ -20,17 +21,9 @@ export const userHandlers = [
   // List (paginated)
   http.get('*/users', ({ request }) => {
     const url = new URL(request.url)
-    const page = parseInt(url.searchParams.get('page') || '1')
-    const size = parseInt(url.searchParams.get('size') || '10')
-    const start = (page - 1) * size
+    const { page, size } = extractPaginationFromUrl(url)
 
-    return HttpResponse.json({
-      items: users.slice(start, start + size),
-      total: users.length,
-      page,
-      size,
-      pages: Math.ceil(users.length / size),
-    })
+    return HttpResponse.json(paginateArray(users, page, size))
   }),
 
   // Get single

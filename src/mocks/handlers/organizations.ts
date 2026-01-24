@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { z } from 'zod'
 import { mockOrganizations, createOrganization } from '../factories'
+import { extractPaginationFromUrl, paginateArray } from './utils'
 
 // Validation schemas for request bodies
 const OrganizationCreateSchema = z.object({
@@ -18,17 +19,9 @@ export const organizationHandlers = [
   // List (paginated)
   http.get('*/organizations', ({ request }) => {
     const url = new URL(request.url)
-    const page = parseInt(url.searchParams.get('page') || '1')
-    const size = parseInt(url.searchParams.get('size') || '10')
-    const start = (page - 1) * size
+    const { page, size } = extractPaginationFromUrl(url)
 
-    return HttpResponse.json({
-      items: organizations.slice(start, start + size),
-      total: organizations.length,
-      page,
-      size,
-      pages: Math.ceil(organizations.length / size),
-    })
+    return HttpResponse.json(paginateArray(organizations, page, size))
   }),
 
   // Get single

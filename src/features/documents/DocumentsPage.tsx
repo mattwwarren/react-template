@@ -90,3 +90,5 @@ export function DocumentsPage(): React.ReactElement {
     </div>
   );
 }
+
+export default DocumentsPage;

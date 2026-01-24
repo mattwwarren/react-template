@@ -101,6 +101,7 @@ deployments:
     helm:
       chart:
         name: component-chart
+        version: "0.9.1"
         repo: https://charts.devspace.sh
       values:
         containers:
@@ -135,7 +136,23 @@ deployments:
               limits:
                 cpu: "500m"
                 memory: "512Mi"
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false  # Dev server needs to write temp files
+              capabilities:
+                drop:
+                  - ALL
+        # Service configuration for development
+        # Note: For production (target: prod), containerPort and targetPort would be 8080 (nginx)
         service:
           ports:
             - port: 80
               targetPort: 5173
+  pdb:
+    namespace: ${NAMESPACE}
+    kubectl:
+      manifests:
+        - deployment/pdb.yaml

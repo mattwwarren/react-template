@@ -10,6 +10,18 @@ export default defineConfig({
     },
   },
   test: {
+    // Mark optional auth SDKs as external - they are installed conditionally
+    server: {
+      deps: {
+        external: [
+          '@ory/client-fetch',
+          '@auth0/auth0-react',
+          'keycloak-js',
+          'aws-amplify',
+          'aws-amplify/auth',
+        ],
+      },
+    },
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
@@ -17,10 +29,19 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80,
+      },
       exclude: [
         'node_modules/',
-        'src/test/',
-        'src/mocks/',
+        'src/components/ui/**', // shadcn components
+        'src/mocks/**',
+        '**/*.test.{ts,tsx}',
+        '**/__tests__/**',
+        'src/test/**',
         '**/*.d.ts',
       ],
     },

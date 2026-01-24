@@ -10,7 +10,16 @@ if ! command -v k3d >/dev/null 2>&1; then
 fi
 
 if ! k3d cluster list | grep -q "^${cluster_name}\\b"; then
-  k3d cluster create "${cluster_name}" --agents 1 --servers 1 --port "5173:80@loadbalancer"
+  k3d cluster create "${cluster_name}" \
+    --agents 1 \
+    --servers 1 \
+    -p "5173:80@loadbalancer" \
+    --registry-create "${cluster_name}-registry:5000"
+fi
+
+# Import local images if they exist
+if docker image inspect "${cluster_name}:dev" &>/dev/null; then
+  k3d image import "${cluster_name}:dev" -c "$cluster_name"
 fi
 
 for _ in $(seq 1 30); do

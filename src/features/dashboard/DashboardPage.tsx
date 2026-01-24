@@ -10,6 +10,8 @@ import { useUsers, useOrganizations } from '@/hooks';
 import { StatsCard } from './StatsCard';
 
 export function DashboardPage(): React.ReactElement {
+  // Fetch minimal data (page: 1, size: 1) - we only need the total count from the response
+  // This avoids fetching unnecessary user/org objects for dashboard stats
   const { data: usersData, isLoading: usersLoading } = useUsers({ page: 1, size: 1 });
   const { data: orgsData, isLoading: orgsLoading } = useOrganizations({ page: 1, size: 1 });
 
@@ -79,3 +81,5 @@ export function DashboardPage(): React.ReactElement {
     </div>
   );
 }
+
+export default DashboardPage;

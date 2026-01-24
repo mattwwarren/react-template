@@ -11,13 +11,13 @@ import {
 } from '@/components/ui/card';
 import { Pagination } from '@/components/shared';
 import { useUsers } from '@/hooks';
+import { getPaginationParams } from '@/lib/utils';
 import { UsersTable } from './UsersTable';
 import { UserDialog } from './UserDialog';
 
 export function UsersPage(): React.ReactElement {
   const [searchParams] = useSearchParams();
-  const page = Number(searchParams.get('page')) || 1;
-  const size = Number(searchParams.get('size')) || 10;
+  const { page, size } = getPaginationParams(searchParams);
 
   const { data, isLoading } = useUsers({ page, size });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -57,3 +57,5 @@ export function UsersPage(): React.ReactElement {
     </div>
   );
 }
+
+export default UsersPage;

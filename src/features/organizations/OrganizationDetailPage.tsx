@@ -175,3 +175,5 @@ export function OrganizationDetailPage(): React.ReactElement {
     </div>
   );
 }
+
+export default OrganizationDetailPage;
