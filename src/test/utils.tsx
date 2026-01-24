@@ -2,6 +2,7 @@ import type { ReactElement, ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, type MemoryRouterProps } from 'react-router-dom'
 import { render, type RenderOptions, renderHook, type RenderHookOptions } from '@testing-library/react'
+import { AuthProvider } from '@/auth'
 
 /**
  * Creates a new QueryClient configured for tests:
@@ -26,42 +27,47 @@ export function createTestQueryClient(): QueryClient {
 interface WrapperOptions {
   queryClient?: QueryClient
   routerProps?: MemoryRouterProps
+  withAuth?: boolean
 }
 
 /**
- * Creates a wrapper component with QueryClient and Router providers.
+ * Creates a wrapper component with QueryClient, Router, and optionally Auth providers.
  * Each call creates a new QueryClient for test isolation.
  */
 export function createWrapper(options: WrapperOptions = {}) {
-  const queryClient = options.queryClient ?? createTestQueryClient()
+  const { queryClient = createTestQueryClient(), routerProps, withAuth = true } = options
 
   return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return (
+    const content = (
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter {...(options.routerProps ?? {})}>
+        <MemoryRouter {...(routerProps ?? {})}>
           {children}
         </MemoryRouter>
       </QueryClientProvider>
     )
+
+    // Wrap in AuthProvider for tests that need auth
+    return withAuth ? <AuthProvider>{content}</AuthProvider> : content
   }
 }
 
 interface RenderWithProvidersOptions extends Omit<RenderOptions, 'wrapper'> {
   queryClient?: QueryClient
   routerProps?: MemoryRouterProps
+  withAuth?: boolean
 }
 
 /**
- * Renders a component with QueryClient and Router providers.
+ * Renders a component with QueryClient, Router, and Auth providers.
  * Returns render result plus the queryClient for assertions.
  */
 export function renderWithProviders(
   ui: ReactElement,
   options: RenderWithProvidersOptions = {}
 ) {
-  const { queryClient = createTestQueryClient(), routerProps, ...renderOptions } = options
+  const { queryClient = createTestQueryClient(), routerProps, withAuth = true, ...renderOptions } = options
 
-  const Wrapper = createWrapper({ queryClient, routerProps })
+  const Wrapper = createWrapper({ queryClient, routerProps, withAuth })
 
   return {
     ...render(ui, { wrapper: Wrapper, ...renderOptions }),
@@ -72,19 +78,20 @@ export function renderWithProviders(
 interface RenderHookWithProvidersOptions<TProps> extends Omit<RenderHookOptions<TProps>, 'wrapper'> {
   queryClient?: QueryClient
   routerProps?: MemoryRouterProps
+  withAuth?: boolean
 }
 
 /**
- * Renders a hook with QueryClient and Router providers.
+ * Renders a hook with QueryClient, Router, and Auth providers.
  * Returns renderHook result plus the queryClient for assertions.
  */
 export function renderHookWithProviders<TResult, TProps>(
   hook: (props: TProps) => TResult,
   options: RenderHookWithProvidersOptions<TProps> = {}
 ) {
-  const { queryClient = createTestQueryClient(), routerProps, ...hookOptions } = options
+  const { queryClient = createTestQueryClient(), routerProps, withAuth = true, ...hookOptions } = options
 
-  const Wrapper = createWrapper({ queryClient, routerProps })
+  const Wrapper = createWrapper({ queryClient, routerProps, withAuth })
 
   return {
     ...renderHook(hook, { wrapper: Wrapper, ...hookOptions }),

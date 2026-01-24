@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { DIALOG_TIMEOUT } from './utils/constants'
 
 test.describe('Organizations', () => {
   test('displays organizations list', async ({ page }) => {
@@ -47,7 +48,7 @@ test.describe('Organizations', () => {
     await page.locator('[role="dialog"] button[type="submit"]').click()
 
     // Dialog should close after successful submission
-    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: DIALOG_TIMEOUT })
   })
 
   test('validates organization form', async ({ page }) => {

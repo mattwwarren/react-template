@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { organizationsApi, type OrganizationCreate, type OrganizationUpdate, type PaginationParams } from '@/api';
 
 export const organizationKeys = {
@@ -56,4 +57,23 @@ export function useDeleteOrganization() {
       void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() });
     },
   });
+}
+
+/**
+ * Returns a stable prefetch function for organization details.
+ * Use on hover/focus to preload organization data before navigation.
+ * Wrapped in useCallback for memoization stability.
+ */
+export function usePrefetchOrganization() {
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    (id: string): void => {
+      void queryClient.prefetchQuery({
+        queryKey: organizationKeys.detail(id),
+        queryFn: () => organizationsApi.get(id),
+      });
+    },
+    [queryClient]
+  );
 }

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import {
   usersApi,
   type User,
@@ -109,4 +110,23 @@ export function useDeleteUser() {
       void queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
   });
+}
+
+/**
+ * Returns a stable prefetch function for user details.
+ * Use on hover/focus to preload user data before navigation.
+ * Wrapped in useCallback for memoization stability.
+ */
+export function usePrefetchUser() {
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    (id: string): void => {
+      void queryClient.prefetchQuery({
+        queryKey: userKeys.detail(id),
+        queryFn: () => usersApi.get(id),
+      });
+    },
+    [queryClient]
+  );
 }

@@ -1,6 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DataTable, DeleteConfirmDialog } from '@/components/shared';
-import { useDeleteUser, useToast, userKeys } from '@/hooks';
-import { usersApi } from '@/api';
+import { useDeleteUser, usePrefetchUser, useToast } from '@/hooks';
 import { UserDialog } from './UserDialog';
 import type { User } from '@/api/types';
 
@@ -22,14 +20,7 @@ interface UsersTableProps {
 }
 
 export function UsersTable({ data, isLoading }: UsersTableProps): React.ReactElement {
-  const queryClient = useQueryClient();
-
-  const handlePrefetch = useCallback((id: string): void => {
-    void queryClient.prefetchQuery({
-      queryKey: userKeys.detail(id),
-      queryFn: () => usersApi.get(id),
-    });
-  }, [queryClient]);
+  const prefetchUser = usePrefetchUser();
 
   const columns = useMemo(() => [
     {
@@ -38,7 +29,8 @@ export function UsersTable({ data, isLoading }: UsersTableProps): React.ReactEle
         <Link
           to={`/users/${user.id}`}
           className="font-medium hover:underline"
-          onMouseEnter={() => handlePrefetch(user.id)}
+          onMouseEnter={() => prefetchUser(user.id)}
+          onFocus={() => prefetchUser(user.id)}
         >
           {user.name}
         </Link>
@@ -70,7 +62,7 @@ export function UsersTable({ data, isLoading }: UsersTableProps): React.ReactEle
       accessor: (user: User) => <UserActions user={user} />,
       className: 'w-[50px]',
     },
-  ], [handlePrefetch]);
+  ], [prefetchUser]);
 
   return (
     <DataTable
@@ -83,7 +75,7 @@ export function UsersTable({ data, isLoading }: UsersTableProps): React.ReactEle
   );
 }
 
-function UserActions({ user }: { user: User }): React.ReactElement {
+const UserActions = memo(function UserActions({ user }: { user: User }): React.ReactElement {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const deleteMutation = useDeleteUser();
@@ -143,4 +135,4 @@ function UserActions({ user }: { user: User }): React.ReactElement {
       />
     </>
   );
-}
+});

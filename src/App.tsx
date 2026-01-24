@@ -1,96 +1,68 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { Toaster } from '@/components/ui/sonner';
-import { ErrorBoundary, LoadingSpinner } from '@/components/shared';
+import { ErrorBoundary, RouteErrorBoundary, LoadingSpinner } from '@/components/shared';
 import { Layout } from '@/components/layout';
+import { AuthProvider } from '@/auth';
+import { ProtectedRoute } from '@/features/auth';
 
-const DashboardPage = lazy(() => import('@/features/dashboard').then(m => ({ default: m.DashboardPage })));
-const UsersPage = lazy(() => import('@/features/users').then(m => ({ default: m.UsersPage })));
-const UserDetailPage = lazy(() => import('@/features/users').then(m => ({ default: m.UserDetailPage })));
-const OrganizationsPage = lazy(() => import('@/features/organizations').then(m => ({ default: m.OrganizationsPage })));
-const OrganizationDetailPage = lazy(() => import('@/features/organizations').then(m => ({ default: m.OrganizationDetailPage })));
-const DocumentsPage = lazy(() => import('@/features/documents').then(m => ({ default: m.DocumentsPage })));
-const NotFoundPage = lazy(() => import('@/features/not-found').then(m => ({ default: m.NotFoundPage })));
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+// Direct file imports for proper tree shaking (avoid barrel imports with lazy())
+const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
+const UsersPage = lazy(() => import('@/features/users/UsersPage'));
+const UserDetailPage = lazy(() => import('@/features/users/UserDetailPage'));
+const OrganizationsPage = lazy(() => import('@/features/organizations/OrganizationsPage'));
+const OrganizationDetailPage = lazy(() => import('@/features/organizations/OrganizationDetailPage'));
+const DocumentsPage = lazy(() => import('@/features/documents/DocumentsPage'));
+const NotFoundPage = lazy(() => import('@/features/not-found/NotFoundPage'));
+const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
+const AuthCallback = lazy(() => import('@/features/auth/AuthCallback'));
 
 function App(): React.ReactElement {
+  // QueryClient created inside component with useMemo for React StrictMode safety.
+  // StrictMode double-invokes component functions during development, so using useMemo
+  // ensures we create a single stable QueryClient instance rather than creating two.
+  const queryClient = useMemo(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        gcTime: 1000 * 60 * 10, // 10 minutes - garbage collection time
+        refetchOnWindowFocus: false,
+        retry: 3, // Retry failed requests up to 3 times
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+      },
+    },
+  }), []);
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Layout>
+        <AuthProvider>
+          <BrowserRouter>
             <Suspense fallback={<div className="flex h-screen items-center justify-center"><LoadingSpinner /></div>}>
               <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <ErrorBoundary>
-                      <DashboardPage />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/users"
-                  element={
-                    <ErrorBoundary>
-                      <UsersPage />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/users/:id"
-                  element={
-                    <ErrorBoundary>
-                      <UserDetailPage />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/organizations"
-                  element={
-                    <ErrorBoundary>
-                      <OrganizationsPage />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/organizations/:id"
-                  element={
-                    <ErrorBoundary>
-                      <OrganizationDetailPage />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="/documents"
-                  element={
-                    <ErrorBoundary>
-                      <DocumentsPage />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="*"
-                  element={
-                    <ErrorBoundary>
-                      <NotFoundPage />
-                    </ErrorBoundary>
-                  }
-                />
+                {/* Public routes - no layout, no auth required */}
+                <Route errorElement={<RouteErrorBoundary />}>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/auth/callback" element={<AuthCallback />} />
+                </Route>
+
+                {/* Protected routes - require authentication */}
+                <Route element={<ProtectedRoute />} errorElement={<RouteErrorBoundary />}>
+                  <Route element={<Layout />}>
+                    <Route path="/" element={<DashboardPage />} />
+                    <Route path="/users" element={<UsersPage />} />
+                    <Route path="/users/:id" element={<UserDetailPage />} />
+                    <Route path="/organizations" element={<OrganizationsPage />} />
+                    <Route path="/organizations/:id" element={<OrganizationDetailPage />} />
+                    <Route path="/documents" element={<DocumentsPage />} />
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Route>
+                </Route>
               </Routes>
             </Suspense>
-          </Layout>
-        </BrowserRouter>
-        <Toaster />
+          </BrowserRouter>
+          <Toaster />
+        </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

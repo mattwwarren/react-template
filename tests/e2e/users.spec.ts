@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { DIALOG_TIMEOUT } from './utils/constants'
 
 test.describe('Users', () => {
   test('displays users list', async ({ page }) => {
@@ -37,6 +38,9 @@ test.describe('Users', () => {
 
     // Should show page 2
     await expect(page.getByText(/page 2 of/i)).toBeVisible()
+
+    // URL should update with page parameter
+    await expect(page).toHaveURL(/page=2/)
   })
 
   test('opens create user dialog', async ({ page }) => {
@@ -68,7 +72,7 @@ test.describe('Users', () => {
     await page.locator('[role="dialog"] button[type="submit"]').click()
 
     // Dialog should close after successful submission
-    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: DIALOG_TIMEOUT })
   })
 
   test('validates form on create', async ({ page }) => {
@@ -117,5 +121,111 @@ test.describe('Users', () => {
     await expect(page.getByRole('menuitem', { name: /view details/i })).toBeVisible()
     await expect(page.getByRole('menuitem', { name: /edit/i })).toBeVisible()
     await expect(page.getByRole('menuitem', { name: /delete/i })).toBeVisible()
+  })
+
+  test('should edit user via actions dropdown', async ({ page }) => {
+    await page.goto('/users')
+
+    // Wait for data to load
+    await expect(page.getByRole('table')).toBeVisible()
+    await page.waitForSelector('table tbody tr')
+
+    // Get the first row
+    const firstRow = page.locator('table tbody tr').first()
+
+    // Click the actions button (three dots menu) on first row
+    const actionsButton = firstRow.getByRole('button')
+    await actionsButton.click()
+
+    // Click edit action
+    await page.getByRole('menuitem', { name: /edit/i }).click()
+
+    // Edit dialog should open
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(page.getByText(/edit user/i)).toBeVisible()
+
+    // Clear and fill new name
+    const nameInput = page.getByLabel(/name/i)
+    await nameInput.clear()
+    await nameInput.fill('Updated User Name')
+
+    // Submit the form
+    await page.locator('[role="dialog"] button[type="submit"]').click()
+
+    // Dialog should close after successful submission
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: DIALOG_TIMEOUT })
+
+    // Verify the name was updated in the table (MSW handlers update in-memory)
+    await expect(firstRow.locator('a').first()).toHaveText('Updated User Name')
+  })
+
+  test('should delete user via actions dropdown', async ({ page }) => {
+    await page.goto('/users')
+
+    // Wait for data to load
+    await expect(page.getByRole('table')).toBeVisible()
+    await page.waitForSelector('table tbody tr')
+
+    // Count initial rows
+    const initialRowCount = await page.locator('table tbody tr').count()
+
+    // Get the first user's name before deleting
+    const firstRow = page.locator('table tbody tr').first()
+    const userToDelete = await firstRow.locator('a').first().textContent()
+
+    // Click the actions button (three dots menu) on first row
+    const actionsButton = firstRow.getByRole('button')
+    await actionsButton.click()
+
+    // Click delete action
+    await page.getByRole('menuitem', { name: /delete/i }).click()
+
+    // Delete confirmation dialog should open (AlertDialog)
+    await expect(page.getByRole('alertdialog')).toBeVisible()
+    await expect(page.getByText(/are you sure/i)).toBeVisible()
+
+    // Confirm deletion
+    await page.getByRole('button', { name: /delete/i }).click()
+
+    // Dialog should close
+    await expect(page.getByRole('alertdialog')).not.toBeVisible({ timeout: DIALOG_TIMEOUT })
+
+    // User should be removed from the list
+    const newRowCount = await page.locator('table tbody tr').count()
+    expect(newRowCount).toBe(initialRowCount - 1)
+
+    // The deleted user's name should no longer appear
+    await expect(page.getByRole('link', { name: userToDelete as string })).not.toBeVisible()
+  })
+
+  test('can cancel delete operation', async ({ page }) => {
+    await page.goto('/users')
+
+    // Wait for data to load
+    await expect(page.getByRole('table')).toBeVisible()
+    await page.waitForSelector('table tbody tr')
+
+    // Count initial rows
+    const initialRowCount = await page.locator('table tbody tr').count()
+
+    // Click the actions button on first row
+    const actionsButton = page.locator('table tbody tr').first().getByRole('button')
+    await actionsButton.click()
+
+    // Click delete action
+    await page.getByRole('menuitem', { name: /delete/i }).click()
+
+    // Delete confirmation dialog should open
+    await expect(page.getByRole('alertdialog')).toBeVisible()
+
+    // Click cancel
+    await page.getByRole('button', { name: /cancel/i }).click()
+
+    // Dialog should close
+    await expect(page.getByRole('alertdialog')).not.toBeVisible()
+
+    // Row count should remain the same
+    const newRowCount = await page.locator('table tbody tr').count()
+    expect(newRowCount).toBe(initialRowCount)
   })
 })

@@ -1,6 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DataTable, DeleteConfirmDialog } from '@/components/shared';
-import { useDeleteOrganization, useToast, organizationKeys } from '@/hooks';
-import { organizationsApi } from '@/api';
+import { useDeleteOrganization, usePrefetchOrganization, useToast } from '@/hooks';
 import { OrganizationDialog } from './OrganizationDialog';
 import type { Organization } from '@/api/types';
 
@@ -25,14 +23,7 @@ export function OrganizationsTable({
   data,
   isLoading,
 }: OrganizationsTableProps): React.ReactElement {
-  const queryClient = useQueryClient();
-
-  const handlePrefetch = useCallback((id: string): void => {
-    void queryClient.prefetchQuery({
-      queryKey: organizationKeys.detail(id),
-      queryFn: () => organizationsApi.get(id),
-    });
-  }, [queryClient]);
+  const prefetchOrganization = usePrefetchOrganization();
 
   const columns = useMemo(() => [
     {
@@ -41,7 +32,8 @@ export function OrganizationsTable({
         <Link
           to={`/organizations/${org.id}`}
           className="font-medium hover:underline"
-          onMouseEnter={() => handlePrefetch(org.id)}
+          onMouseEnter={() => prefetchOrganization(org.id)}
+          onFocus={() => prefetchOrganization(org.id)}
         >
           {org.name}
         </Link>
@@ -63,7 +55,7 @@ export function OrganizationsTable({
       accessor: (org: Organization) => <OrganizationActions organization={org} />,
       className: 'w-[50px]',
     },
-  ], [handlePrefetch]);
+  ], [prefetchOrganization]);
 
   return (
     <DataTable
@@ -76,7 +68,7 @@ export function OrganizationsTable({
   );
 }
 
-function OrganizationActions({
+const OrganizationActions = memo(function OrganizationActions({
   organization,
 }: {
   organization: Organization;
@@ -144,4 +136,4 @@ function OrganizationActions({
       />
     </>
   );
-}
+});
