@@ -1,6 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
-import { organizationsApi, type Organization, type OrganizationCreate, type OrganizationUpdate, type PaginationParams } from '@/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
+import {
+  type Organization,
+  type OrganizationCreate,
+  type OrganizationUpdate,
+  organizationsApi,
+  type PaginationParams,
+} from '@/api'
 
 export const organizationKeys = {
   all: ['organizations'] as const,
@@ -8,13 +14,13 @@ export const organizationKeys = {
   list: (params: PaginationParams) => [...organizationKeys.lists(), params] as const,
   details: () => [...organizationKeys.all, 'detail'] as const,
   detail: (id: string) => [...organizationKeys.details(), id] as const,
-};
+}
 
 export function useOrganizations(params: PaginationParams = {}) {
   return useQuery({
     queryKey: organizationKeys.list(params),
     queryFn: () => organizationsApi.list(params),
-  });
+  })
 }
 
 export function useOrganization(id: string) {
@@ -22,22 +28,22 @@ export function useOrganization(id: string) {
     queryKey: organizationKeys.detail(id),
     queryFn: () => organizationsApi.get(id),
     enabled: !!id,
-  });
+  })
 }
 
 export function useCreateOrganization() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (data: OrganizationCreate) => organizationsApi.create(data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() })
     },
-  });
+  })
 }
 
 export function useUpdateOrganization() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: OrganizationUpdate }) =>
@@ -46,12 +52,10 @@ export function useUpdateOrganization() {
     // Optimistic update
     onMutate: async ({ id, data }) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: organizationKeys.detail(id) });
+      await queryClient.cancelQueries({ queryKey: organizationKeys.detail(id) })
 
       // Snapshot current value
-      const previousOrg = queryClient.getQueryData<Organization>(
-        organizationKeys.detail(id)
-      );
+      const previousOrg = queryClient.getQueryData<Organization>(organizationKeys.detail(id))
 
       // Optimistically update the cache
       if (previousOrg) {
@@ -59,52 +63,61 @@ export function useUpdateOrganization() {
           ...previousOrg,
           ...data,
           name: data.name ?? previousOrg.name,
-        });
+        })
       }
 
-      return { previousOrg };
+      return { previousOrg }
     },
 
     // Rollback on error
     onError: (_err, { id }, context) => {
       if (context?.previousOrg) {
-        queryClient.setQueryData(organizationKeys.detail(id), context.previousOrg);
+        queryClient.setQueryData(organizationKeys.detail(id), context.previousOrg)
       }
     },
 
     // Always refetch after success or error
     onSettled: (_data, _error, { id }) => {
-      void queryClient.invalidateQueries({ queryKey: organizationKeys.detail(id) });
-      void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: organizationKeys.detail(id) })
+      void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() })
     },
-  });
+  })
 }
 
 export function useDeleteOrganization() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (id: string) => organizationsApi.delete(id),
 
-    // Optimistic delete from lists
+    // Optimistic delete
     onMutate: async (id) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: organizationKeys.lists() });
+      await queryClient.cancelQueries({ queryKey: organizationKeys.lists() })
+      await queryClient.cancelQueries({ queryKey: organizationKeys.detail(id) })
 
-      // Mark for refetch (we don't have access to all list query keys)
-      return { id };
+      // Snapshot current detail value
+      const previousOrg = queryClient.getQueryData<Organization>(organizationKeys.detail(id))
+
+      // Remove from detail cache
+      queryClient.removeQueries({ queryKey: organizationKeys.detail(id) })
+
+      return { previousOrg, id }
     },
 
-    // Invalidate on success
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() });
+    // Rollback on error
+    onError: (_err, id, context) => {
+      if (context?.previousOrg) {
+        queryClient.setQueryData(organizationKeys.detail(id), context.previousOrg)
+      }
+      void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() })
     },
 
-    // Rollback on error (refetch lists)
-    onError: () => {
-      void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() });
+    // Always refetch after success
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() })
     },
-  });
+  })
 }
 
 /**
@@ -113,15 +126,15 @@ export function useDeleteOrganization() {
  * Wrapped in useCallback for memoization stability.
  */
 export function usePrefetchOrganization() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useCallback(
     (id: string): void => {
       void queryClient.prefetchQuery({
         queryKey: organizationKeys.detail(id),
         queryFn: () => organizationsApi.get(id),
-      });
+      })
     },
     [queryClient]
-  );
+  )
 }
