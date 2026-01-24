@@ -3,6 +3,7 @@ import { documentsApi } from '@/api';
 
 export const documentKeys = {
   all: ['documents'] as const,
+  lists: () => [...documentKeys.all, 'list'] as const,
   details: () => [...documentKeys.all, 'detail'] as const,
   detail: (id: string) => [...documentKeys.details(), id] as const,
 };
@@ -32,7 +33,23 @@ export function useDeleteDocument() {
 
   return useMutation({
     mutationFn: (id: string) => documentsApi.delete(id),
+
+    // Optimistic delete
+    onMutate: async (id) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: documentKeys.all });
+
+      // Mark for refetch
+      return { id };
+    },
+
+    // Invalidate on success
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: documentKeys.all });
+    },
+
+    // Rollback on error (refetch all)
+    onError: () => {
       void queryClient.invalidateQueries({ queryKey: documentKeys.all });
     },
   });

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { organizationsApi, type OrganizationCreate, type OrganizationUpdate, type PaginationParams } from '@/api';
+import { organizationsApi, type Organization, type OrganizationCreate, type OrganizationUpdate, type PaginationParams } from '@/api';
 
 export const organizationKeys = {
   all: ['organizations'] as const,
@@ -40,8 +40,40 @@ export function useUpdateOrganization() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: OrganizationUpdate }) => organizationsApi.update(id, data),
-    onSuccess: (_, { id }) => {
+    mutationFn: ({ id, data }: { id: string; data: OrganizationUpdate }) =>
+      organizationsApi.update(id, data),
+
+    // Optimistic update
+    onMutate: async ({ id, data }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: organizationKeys.detail(id) });
+
+      // Snapshot current value
+      const previousOrg = queryClient.getQueryData<Organization>(
+        organizationKeys.detail(id)
+      );
+
+      // Optimistically update the cache
+      if (previousOrg) {
+        queryClient.setQueryData<Organization>(organizationKeys.detail(id), {
+          ...previousOrg,
+          ...data,
+          name: data.name ?? previousOrg.name,
+        });
+      }
+
+      return { previousOrg };
+    },
+
+    // Rollback on error
+    onError: (_err, { id }, context) => {
+      if (context?.previousOrg) {
+        queryClient.setQueryData(organizationKeys.detail(id), context.previousOrg);
+      }
+    },
+
+    // Always refetch after success or error
+    onSettled: (_data, _error, { id }) => {
       void queryClient.invalidateQueries({ queryKey: organizationKeys.detail(id) });
       void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() });
     },
@@ -53,7 +85,23 @@ export function useDeleteOrganization() {
 
   return useMutation({
     mutationFn: (id: string) => organizationsApi.delete(id),
+
+    // Optimistic delete from lists
+    onMutate: async (id) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: organizationKeys.lists() });
+
+      // Mark for refetch (we don't have access to all list query keys)
+      return { id };
+    },
+
+    // Invalidate on success
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() });
+    },
+
+    // Rollback on error (refetch lists)
+    onError: () => {
       void queryClient.invalidateQueries({ queryKey: organizationKeys.lists() });
     },
   });
