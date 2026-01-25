@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '@/auth'
 import { LoadingSpinner } from '@/components/shared'
 
 /**
@@ -10,26 +11,48 @@ import { LoadingSpinner } from '@/components/shared'
 export function AuthCallback(): React.ReactElement {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { login } = useAuth()
 
   useEffect(() => {
-    // Get the error if any
-    const error = searchParams.get('error')
-    const errorDescription = searchParams.get('error_description')
+    async function handleCallback() {
+      const error = searchParams.get('error')
+      const errorDescription = searchParams.get('error_description')
 
-    if (error) {
-      console.error('Auth callback error:', error, errorDescription)
-      navigate('/login', {
-        replace: true,
-        state: { error: errorDescription || error },
-      })
-      return
+      if (error) {
+        console.error('Auth callback error:', error, errorDescription)
+        navigate('/login', {
+          replace: true,
+          state: { error: errorDescription || error },
+        })
+        return
+      }
+
+      // Check for Ory authentication assurance level (aal)
+      const aal = searchParams.get('aal')
+
+      if (aal) {
+        // Session cookie set by Kratos - validate via login()
+        try {
+          await login() // Calls toSession() to validate
+
+          const returnTo = searchParams.get('return_to') || '/'
+          navigate(returnTo, { replace: true })
+        } catch (err) {
+          console.error('Session validation failed:', err)
+          navigate('/login', {
+            replace: true,
+            state: { error: 'Failed to validate session' },
+          })
+        }
+      } else {
+        // No aal parameter - just redirect
+        const returnTo = searchParams.get('return_to') || '/'
+        navigate(returnTo, { replace: true })
+      }
     }
 
-    // For real providers, this would handle the callback
-    // For now, just redirect to home (mock provider doesn't use this)
-    const returnTo = searchParams.get('return_to') || '/'
-    navigate(returnTo, { replace: true })
-  }, [navigate, searchParams])
+    void handleCallback()
+  }, [navigate, searchParams, login])
 
   return (
     <div className="flex min-h-screen items-center justify-center">

@@ -1,4 +1,4 @@
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4455'
 
 export class ApiError extends Error {
   status: number
@@ -33,6 +33,7 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
   const url = `${API_BASE_URL}${endpoint}`
   const response = await fetch(url, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
@@ -56,6 +57,7 @@ export async function fetchApiFormData<T>(
     method: 'POST',
     ...options,
     body: formData,
+    credentials: 'include',
     // No Content-Type header - browser sets it with boundary for FormData
   })
 
