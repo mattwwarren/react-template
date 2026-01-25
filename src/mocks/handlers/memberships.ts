@@ -9,8 +9,8 @@ export const membershipHandlers = [
   // List (paginated)
   http.get('*/memberships', ({ request }) => {
     const url = new URL(request.url)
-    const page = parseInt(url.searchParams.get('page') || '1')
-    const size = parseInt(url.searchParams.get('size') || '10')
+    const page = parseInt(url.searchParams.get('page') || '1', 10)
+    const size = parseInt(url.searchParams.get('size') || '10', 10)
     const start = (page - 1) * size
 
     return HttpResponse.json({
@@ -36,9 +36,11 @@ export const membershipHandlers = [
     if (idx === -1) {
       return new HttpResponse(null, { status: 404 })
     }
+    const current = memberships[idx]
+    if (!current) {
+      return new HttpResponse(null, { status: 404 })
+    }
     const body = (await request.json()) as MembershipUpdate
-    // Non-null assertion safe: idx !== -1 check above guarantees element exists
-    const current = memberships[idx]!
     if (body.role) {
       memberships[idx] = {
         id: current.id,
@@ -49,7 +51,11 @@ export const membershipHandlers = [
         updated_at: new Date().toISOString(),
       }
     }
-    return HttpResponse.json(memberships[idx])
+    const updated = memberships[idx]
+    if (!updated) {
+      return new HttpResponse(null, { status: 500 })
+    }
+    return HttpResponse.json(updated)
   }),
 
   // Delete

@@ -60,19 +60,23 @@ function generateDataset() {
   // Update users with their organization info
   users.forEach((user) => {
     const userMemberships = memberships.filter((m) => m.user_id === user.id)
-    user.organizations = userMemberships.map((m) => {
-      const org = organizations.find((o) => o.id === m.organization_id)!
-      return createOrganizationInfo({ id: org.id, name: org.name })
-    })
+    user.organizations = userMemberships
+      .map((m) => {
+        const org = organizations.find((o) => o.id === m.organization_id)
+        return org ? createOrganizationInfo({ id: org.id, name: org.name }) : null
+      })
+      .filter((org): org is ReturnType<typeof createOrganizationInfo> => org !== null)
   })
 
   // Update organizations with their user info
   organizations.forEach((org) => {
     const orgMemberships = memberships.filter((m) => m.organization_id === org.id)
-    org.users = orgMemberships.map((m) => {
-      const user = users.find((u) => u.id === m.user_id)!
-      return createUserInfo({ id: user.id, email: user.email, name: user.name })
-    })
+    org.users = orgMemberships
+      .map((m) => {
+        const user = users.find((u) => u.id === m.user_id)
+        return user ? createUserInfo({ id: user.id, email: user.email, name: user.name }) : null
+      })
+      .filter((user): user is ReturnType<typeof createUserInfo> => user !== null)
   })
 
   // Create 50 documents spread across organizations

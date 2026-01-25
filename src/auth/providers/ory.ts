@@ -1,3 +1,4 @@
+import { clearSelectedOrganization } from '@/lib/organization'
 import type { AuthProviderImplementation, AuthState } from '../types'
 import { createExternalAuthStore } from './createExternalStore'
 
@@ -86,6 +87,8 @@ async function login(): Promise<void> {
 }
 
 async function logout(): Promise<void> {
+  clearSelectedOrganization()
+
   try {
     const client = await createOryClient()
     if (!client) {

@@ -74,7 +74,7 @@ describe('useUsers', () => {
       const userId = listResult.result.current.data?.items[0]?.id
       expect(userId).toBeDefined()
 
-      const { result } = renderHookWithProviders(() => useUser(userId!))
+      const { result } = renderHookWithProviders(() => useUser(userId ?? ''))
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
 

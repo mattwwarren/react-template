@@ -173,10 +173,7 @@ describe('API client', () => {
       await fetchApi('/users')
 
       // Should call with base URL + endpoint
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/\/api\/users$/),
-        expect.any(Object)
-      )
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4455/users', expect.any(Object))
     })
   })
 
@@ -204,6 +201,118 @@ describe('API client', () => {
       expect(() => {
         throw new ApiError(500, 'Internal Server Error')
       }).toThrow(ApiError)
+    })
+  })
+
+  describe('Organization header injection', () => {
+    const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000'
+    const INVALID_UUID = 'not-a-uuid'
+
+    beforeEach(() => {
+      localStorage.clear()
+    })
+
+    it('injects X-Selected-Org header when valid org is selected', async () => {
+      localStorage.setItem('selectedOrganizationId', VALID_UUID)
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      })
+
+      await fetchApi('/test')
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'X-Selected-Org': VALID_UUID,
+          }),
+        })
+      )
+    })
+
+    it('does not inject X-Selected-Org header when no org is selected', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      })
+
+      await fetchApi('/test')
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.not.objectContaining({
+            'X-Selected-Org': expect.anything(),
+          }),
+        })
+      )
+    })
+
+    it('clears invalid organization IDs from localStorage', async () => {
+      localStorage.setItem('selectedOrganizationId', INVALID_UUID)
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      })
+
+      await fetchApi('/test')
+
+      expect(localStorage.getItem('selectedOrganizationId')).toBeNull()
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Invalid organization ID in localStorage, clearing:',
+        INVALID_UUID
+      )
+
+      consoleWarnSpy.mockRestore()
+    })
+
+    it('clears organization on 403 error with org-related detail', async () => {
+      localStorage.setItem('selectedOrganizationId', VALID_UUID)
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        json: async () => ({ detail: 'User is not a member of the selected organization' }),
+      })
+
+      try {
+        await fetchApi('/test')
+      } catch {
+        // Expected to throw
+      }
+
+      expect(localStorage.getItem('selectedOrganizationId')).toBeNull()
+    })
+
+    it('emits org:cleared event on 403 org error', async () => {
+      localStorage.setItem('selectedOrganizationId', VALID_UUID)
+
+      const eventSpy = vi.fn()
+      window.addEventListener('org:cleared', eventSpy)
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        json: async () => ({ detail: 'Invalid organization access' }),
+      })
+
+      try {
+        await fetchApi('/test')
+      } catch {
+        // Expected to throw
+      }
+
+      expect(eventSpy).toHaveBeenCalled()
+      window.removeEventListener('org:cleared', eventSpy)
     })
   })
 })

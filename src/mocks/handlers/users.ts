@@ -69,8 +69,10 @@ export const userHandlers = [
       )
     }
 
-    // Non-null assertion safe: idx !== -1 check above guarantees element exists
-    const current = users[idx]!
+    const current = users[idx]
+    if (!current) {
+      return new HttpResponse(null, { status: 404 })
+    }
     users[idx] = {
       id: current.id,
       email: result.data.email ?? current.email,
@@ -79,7 +81,11 @@ export const userHandlers = [
       updated_at: new Date().toISOString(),
       ...(current.organizations && { organizations: current.organizations }),
     }
-    return HttpResponse.json(users[idx])
+    const updated = users[idx]
+    if (!updated) {
+      return new HttpResponse(null, { status: 500 })
+    }
+    return HttpResponse.json(updated)
   }),
 
   // Delete

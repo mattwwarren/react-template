@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { clearSelectedOrganization } from '@/lib/organization'
 import type { AuthProviderImplementation, AuthState, AuthUser } from '../types'
 
 const STORAGE_KEY = 'mock_auth_user'
@@ -64,6 +65,7 @@ function login(): void {
 }
 
 function logout(): void {
+  clearSelectedOrganization()
   currentUser = null
   localStorage.removeItem(STORAGE_KEY)
   emitChange()

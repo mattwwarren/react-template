@@ -33,8 +33,8 @@ export function DataTable<T>({
   if (isLoading) {
     return (
       <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
+        {Array.from({ length: 5 }, (_, i) => `loading-row-${i}`).map((key) => (
+          <Skeleton key={key} className="h-12 w-full" />
         ))}
       </div>
     )
@@ -52,8 +52,8 @@ export function DataTable<T>({
     <Table>
       <TableHeader>
         <TableRow>
-          {columns.map((col, i) => (
-            <TableHead key={i} className={col.className}>
+          {columns.map((col) => (
+            <TableHead key={col.header} className={col.className}>
               {col.header}
             </TableHead>
           ))}
@@ -62,8 +62,8 @@ export function DataTable<T>({
       <TableBody>
         {data.map((row) => (
           <TableRow key={keyExtractor(row)}>
-            {columns.map((col, i) => (
-              <TableCell key={i} className={col.className}>
+            {columns.map((col) => (
+              <TableCell key={col.header} className={col.className}>
                 {col.accessor(row)}
               </TableCell>
             ))}

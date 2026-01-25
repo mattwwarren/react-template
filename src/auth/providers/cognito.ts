@@ -57,8 +57,7 @@ async function initCognito(): Promise<void> {
     const config = getCognitoConfig()
 
     // Configure Amplify
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cognitoConfig: any = {
+    const cognitoConfig: Record<string, unknown> = {
       userPoolId: config.userPoolId,
       userPoolClientId: config.userPoolClientId,
     }
@@ -67,7 +66,7 @@ async function initCognito(): Promise<void> {
         oauth: {
           domain: config.domain,
           scopes: ['openid', 'email', 'profile'],
-          redirectSignIn: [window.location.origin + '/auth/callback'],
+          redirectSignIn: [`${window.location.origin}/auth/callback`],
           redirectSignOut: [window.location.origin],
           responseType: 'code',
         },
@@ -114,7 +113,7 @@ async function login(): Promise<void> {
     // Fallback: redirect to Cognito Hosted UI manually
     const config = getCognitoConfig()
     if (config.domain) {
-      const returnTo = encodeURIComponent(window.location.origin + '/auth/callback')
+      const returnTo = encodeURIComponent(`${window.location.origin}/auth/callback`)
       window.location.href = `https://${config.domain}/login?client_id=${config.userPoolClientId}&response_type=code&scope=openid+email+profile&redirect_uri=${returnTo}`
     } else {
       console.error('Cognito domain not configured for hosted UI login')

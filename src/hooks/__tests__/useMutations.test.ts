@@ -90,7 +90,7 @@ describe('User mutations', () => {
 
       await act(async () => {
         updateHook.result.current.mutate({
-          id: user!.id,
+          id: user?.id,
           data: { name: 'Updated Name' },
         })
       })
@@ -98,7 +98,7 @@ describe('User mutations', () => {
       await waitFor(() => expect(updateHook.result.current.isSuccess).toBe(true))
 
       expect(updateHook.result.current.data?.name).toBe('Updated Name')
-      expect(updateHook.result.current.data?.email).toBe(user!.email)
+      expect(updateHook.result.current.data?.email).toBe(user?.email)
     })
 
     it('performs optimistic update', async () => {
@@ -112,7 +112,7 @@ describe('User mutations', () => {
       expect(user).toBeDefined()
 
       // Load the user detail to cache it
-      const detailHook = renderHookWithProviders(() => useUser(user!.id), { queryClient })
+      const detailHook = renderHookWithProviders(() => useUser(user?.id), { queryClient })
       await waitFor(() => expect(detailHook.result.current.isSuccess).toBe(true))
 
       // Start the update
@@ -120,13 +120,13 @@ describe('User mutations', () => {
 
       act(() => {
         updateHook.result.current.mutate({
-          id: user!.id,
+          id: user?.id,
           data: { name: 'Optimistic Name' },
         })
       })
 
       // Check cache was updated optimistically (before server response)
-      const cachedUser = queryClient.getQueryData(userKeys.detail(user!.id))
+      const cachedUser = queryClient.getQueryData(userKeys.detail(user?.id))
       expect(cachedUser).toBeDefined()
     })
 
@@ -161,7 +161,7 @@ describe('User mutations', () => {
       const deleteHook = renderHookWithProviders(() => useDeleteUser(), { queryClient })
 
       await act(async () => {
-        deleteHook.result.current.mutate(user!.id)
+        deleteHook.result.current.mutate(user?.id)
       })
 
       await waitFor(() => expect(deleteHook.result.current.isSuccess).toBe(true))
@@ -195,7 +195,7 @@ describe('User mutations', () => {
       const deleteHook = renderHookWithProviders(() => useDeleteUser(), { queryClient })
 
       await act(async () => {
-        deleteHook.result.current.mutate(user!.id)
+        deleteHook.result.current.mutate(user?.id)
       })
 
       await waitFor(() => expect(deleteHook.result.current.isSuccess).toBe(true))
@@ -204,7 +204,7 @@ describe('User mutations', () => {
       await listHook.result.current.refetch()
       await waitFor(() => {
         const items = listHook.result.current.data?.items ?? []
-        const deletedUserStillExists = items.some((u) => u.id === user!.id)
+        const deletedUserStillExists = items.some((u) => u.id === user?.id)
         expect(deletedUserStillExists).toBe(false)
       })
     })

@@ -1,5 +1,5 @@
 import { Menu } from 'lucide-react'
-import { UserMenu } from '@/components/shared'
+import { OrganizationSwitcher, UserMenu } from '@/components/shared'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { MobileSidebar } from './MobileSidebar'
@@ -26,8 +26,11 @@ export function Header(): React.ReactElement {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* User menu */}
-      <UserMenu />
+      {/* Organization switcher and user menu */}
+      <div className="flex items-center gap-4">
+        <OrganizationSwitcher />
+        <UserMenu />
+      </div>
     </header>
   )
 }

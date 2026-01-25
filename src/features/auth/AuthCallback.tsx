@@ -1,7 +1,9 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth'
 import { LoadingSpinner } from '@/components/shared'
+import { getSelectedOrganization, setSelectedOrganization } from '@/lib/organization'
+import { OrganizationPicker } from './OrganizationPicker'
 
 /**
  * OAuth callback handler for real auth providers.
@@ -11,7 +13,8 @@ import { LoadingSpinner } from '@/components/shared'
 export function AuthCallback(): React.ReactElement {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { login } = useAuth()
+  const { login, logout } = useAuth()
+  const [needsOrgSelection, setNeedsOrgSelection] = useState(false)
 
   useEffect(() => {
     async function handleCallback() {
@@ -35,6 +38,13 @@ export function AuthCallback(): React.ReactElement {
         try {
           await login() // Calls toSession() to validate
 
+          // NEW: Check if org already selected
+          const selectedOrg = getSelectedOrganization()
+          if (!selectedOrg) {
+            setNeedsOrgSelection(true)
+            return
+          }
+
           const returnTo = searchParams.get('return_to') || '/'
           navigate(returnTo, { replace: true })
         } catch (err) {
@@ -53,6 +63,26 @@ export function AuthCallback(): React.ReactElement {
 
     void handleCallback()
   }, [navigate, searchParams, login])
+
+  // NEW: Memoized callback (prevents infinite loops)
+  const handleOrgSelect = useCallback(
+    (orgId: string) => {
+      setSelectedOrganization(orgId)
+      const returnTo = searchParams.get('return_to') || '/'
+      navigate(returnTo, { replace: true })
+    },
+    [searchParams, navigate]
+  )
+
+  // NEW: Logout handler
+  const handleLogout = useCallback(() => {
+    logout()
+  }, [logout])
+
+  // Show org picker if needed
+  if (needsOrgSelection) {
+    return <OrganizationPicker onSelect={handleOrgSelect} onLogout={handleLogout} />
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center">

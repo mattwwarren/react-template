@@ -161,7 +161,7 @@ export function createAuth0Provider(): AuthProviderImplementation {
     } else {
       // Fallback: redirect to Auth0 login manually
       const config = getAuth0Config()
-      const returnTo = encodeURIComponent(window.location.origin + '/auth/callback')
+      const returnTo = encodeURIComponent(`${window.location.origin}/auth/callback`)
       window.location.href = `https://${config.domain}/authorize?client_id=${config.clientId}&redirect_uri=${returnTo}&response_type=code&scope=openid%20profile%20email`
     }
   }
@@ -195,7 +195,7 @@ export function createAuth0Provider(): AuthProviderImplementation {
     const Provider = Auth0ProviderComponent
 
     const authParams: { redirect_uri: string; audience?: string } = {
-      redirect_uri: window.location.origin + '/auth/callback',
+      redirect_uri: `${window.location.origin}/auth/callback`,
     }
     if (config.audience) {
       authParams.audience = config.audience
@@ -228,7 +228,7 @@ function Auth0ContextBridgeWithHook({
 }): React.ReactElement {
   // useAuth0Hook is guaranteed to be non-null when this component renders
   // (only rendered inside Auth0Provider after SDK loads)
-  const context = useAuth0Hook!()
+  const context = useAuth0Hook?.()
 
   useEffect(() => {
     auth0Context = context

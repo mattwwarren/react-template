@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { lazy, Suspense, useMemo } from 'react'
+import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from '@/auth'
 import { Layout } from '@/components/layout'
@@ -37,6 +37,19 @@ function App(): React.ReactElement {
       }),
     []
   )
+
+  // Cross-tab organization sync - reload page when org changes in another tab
+  useEffect(() => {
+    function handleStorageChange(e: StorageEvent) {
+      if (e.key === 'selectedOrganizationId' && e.newValue !== e.oldValue) {
+        window.location.reload()
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>

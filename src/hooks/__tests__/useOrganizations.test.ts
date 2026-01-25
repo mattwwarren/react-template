@@ -74,7 +74,7 @@ describe('useOrganizations', () => {
       const orgId = listResult.result.current.data?.items[0]?.id
       expect(orgId).toBeDefined()
 
-      const { result } = renderHookWithProviders(() => useOrganization(orgId!))
+      const { result } = renderHookWithProviders(() => useOrganization(orgId ?? ''))
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
