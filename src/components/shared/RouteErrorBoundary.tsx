@@ -1,5 +1,6 @@
-import { useRouteError, isRouteErrorResponse, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { AlertCircle } from 'lucide-react'
+import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -7,8 +8,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
+} from '@/components/ui/card'
 
 /**
  * Error boundary for React Router routes.
@@ -16,28 +16,29 @@ import { AlertCircle } from 'lucide-react';
  * Provides user-friendly error display with recovery option.
  */
 export function RouteErrorBoundary(): React.ReactElement {
-  const error = useRouteError();
-  const navigate = useNavigate();
+  const error = useRouteError()
+  const navigate = useNavigate()
 
-  let title = 'Something went wrong';
-  let description = 'An unexpected error occurred. Please try again.';
-  let errorMessage = 'Unknown error';
+  let title = 'Something went wrong'
+  let description = 'An unexpected error occurred. Please try again.'
+  let errorMessage = 'Unknown error'
 
   if (isRouteErrorResponse(error)) {
     // Handle React Router error responses (404, etc.)
-    title = `${error.status} ${error.statusText}`;
-    description = error.status === 404
-      ? 'The page you are looking for does not exist.'
-      : 'An error occurred while loading this page.';
-    errorMessage = error.data?.message || error.statusText;
+    title = `${error.status} ${error.statusText}`
+    description =
+      error.status === 404
+        ? 'The page you are looking for does not exist.'
+        : 'An error occurred while loading this page.'
+    errorMessage = error.data?.message || error.statusText
   } else if (error instanceof Error) {
     // Handle JavaScript errors
-    errorMessage = error.message;
+    errorMessage = error.message
   }
 
   const handleReset = (): void => {
-    navigate('/');
-  };
+    navigate('/')
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted p-4">
@@ -50,14 +51,12 @@ export function RouteErrorBoundary(): React.ReactElement {
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <pre className="overflow-auto rounded bg-muted p-4 text-sm">
-            {errorMessage}
-          </pre>
+          <pre className="overflow-auto rounded bg-muted p-4 text-sm">{errorMessage}</pre>
         </CardContent>
         <CardFooter>
           <Button onClick={handleReset}>Return to Dashboard</Button>
         </CardFooter>
       </Card>
     </div>
-  );
+  )
 }

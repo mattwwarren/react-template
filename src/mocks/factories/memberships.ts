@@ -1,5 +1,5 @@
-import { faker } from './index'
 import type { Membership, MembershipRole } from '@/api/types'
+import { faker } from './index'
 
 const ROLES: MembershipRole[] = ['owner', 'admin', 'member']
 

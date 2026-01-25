@@ -1,6 +1,6 @@
-import { http, HttpResponse } from 'msw'
+import { HttpResponse, http } from 'msw'
 import { z } from 'zod'
-import { DEFAULT_USER, type AuthUser } from '@/auth/providers/mock'
+import { type AuthUser, DEFAULT_USER } from '@/auth/providers/mock'
 
 // Validation schema for login
 const LoginSchema = z.object({

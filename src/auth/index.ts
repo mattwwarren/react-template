@@ -1,9 +1,9 @@
 export { AuthProvider } from './context'
-export { useAuth } from './useAuth'
 export type {
-  AuthUser,
-  AuthState,
   AuthContextValue,
-  AuthProviderType,
   AuthProviderImplementation,
+  AuthProviderType,
+  AuthState,
+  AuthUser,
 } from './types'
+export { useAuth } from './useAuth'

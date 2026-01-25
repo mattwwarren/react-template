@@ -1,19 +1,13 @@
-import type { LucideIcon } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import type { LucideIcon } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface StatsCardProps {
-  title: string;
-  value: number | undefined;
-  icon: LucideIcon;
-  description: string;
-  isLoading?: boolean;
+  title: string
+  value: number | undefined
+  icon: LucideIcon
+  description: string
+  isLoading?: boolean
 }
 
 export function StatsCard({
@@ -33,12 +27,10 @@ export function StatsCard({
         {isLoading ? (
           <Skeleton className="h-8 w-16" />
         ) : (
-          <div className="text-2xl font-bold">
-            {value?.toLocaleString() ?? 0}
-          </div>
+          <div className="text-2xl font-bold">{value?.toLocaleString() ?? 0}</div>
         )}
         <CardDescription className="text-xs">{description}</CardDescription>
       </CardContent>
     </Card>
-  );
+  )
 }

@@ -1,5 +1,5 @@
-import { faker } from './index'
 import type { User, UserInfo } from '@/api/types'
+import { faker } from './index'
 
 export function createUser(overrides?: Partial<User>): User {
   const createdAt = faker.date.past().toISOString()

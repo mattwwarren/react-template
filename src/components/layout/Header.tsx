@@ -1,12 +1,8 @@
-import { Menu } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import { MobileSidebar } from './MobileSidebar';
-import { UserMenu } from '@/components/shared';
+import { Menu } from 'lucide-react'
+import { UserMenu } from '@/components/shared'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { MobileSidebar } from './MobileSidebar'
 
 export function Header(): React.ReactElement {
   return (
@@ -33,5 +29,5 @@ export function Header(): React.ReactElement {
       {/* User menu */}
       <UserMenu />
     </header>
-  );
+  )
 }

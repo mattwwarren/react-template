@@ -1,6 +1,6 @@
-import { NavLink } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { navigation } from './navigation';
+import { NavLink } from 'react-router-dom'
+import { cn } from '@/lib/utils'
+import { navigation } from './navigation'
 
 export function Sidebar(): React.ReactElement {
   return (
@@ -28,5 +28,5 @@ export function Sidebar(): React.ReactElement {
         ))}
       </nav>
     </aside>
-  );
+  )
 }

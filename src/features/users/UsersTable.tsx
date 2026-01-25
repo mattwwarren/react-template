@@ -1,68 +1,70 @@
-import React, { useState, useMemo, memo } from 'react';
-import { Link } from 'react-router-dom';
-import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import type React from 'react'
+import { memo, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import type { User } from '@/api/types'
+import { DataTable, DeleteConfirmDialog } from '@/components/shared'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { DataTable, DeleteConfirmDialog } from '@/components/shared';
-import { useDeleteUser, usePrefetchUser, useToast } from '@/hooks';
-import { UserDialog } from './UserDialog';
-import type { User } from '@/api/types';
+} from '@/components/ui/dropdown-menu'
+import { useDeleteUser, usePrefetchUser, useToast } from '@/hooks'
+import { UserDialog } from './UserDialog'
 
 interface UsersTableProps {
-  data: User[] | undefined;
-  isLoading: boolean;
+  data: User[] | undefined
+  isLoading: boolean
 }
 
 export function UsersTable({ data, isLoading }: UsersTableProps): React.ReactElement {
-  const prefetchUser = usePrefetchUser();
+  const prefetchUser = usePrefetchUser()
 
-  const columns = useMemo(() => [
-    {
-      header: 'Name',
-      accessor: (user: User) => (
-        <Link
-          to={`/users/${user.id}`}
-          className="font-medium hover:underline"
-          onMouseEnter={() => prefetchUser(user.id)}
-          onFocus={() => prefetchUser(user.id)}
-        >
-          {user.name}
-        </Link>
-      ),
-    },
-    {
-      header: 'Email',
-      accessor: (user: User) => user.email,
-    },
-    {
-      header: 'Organizations',
-      accessor: (user: User) => (
-        <div className="flex flex-wrap gap-1">
-          {user.organizations?.slice(0, 3).map((org) => (
-            <Badge key={org.id} variant="secondary">
-              {org.name}
-            </Badge>
-          ))}
-          {(user.organizations?.length ?? 0) > 3 && (
-            <Badge variant="outline">
-              +{(user.organizations?.length ?? 0) - 3}
-            </Badge>
-          )}
-        </div>
-      ),
-    },
-    {
-      header: '',
-      accessor: (user: User) => <UserActions user={user} />,
-      className: 'w-[50px]',
-    },
-  ], [prefetchUser]);
+  const columns = useMemo(
+    () => [
+      {
+        header: 'Name',
+        accessor: (user: User) => (
+          <Link
+            to={`/users/${user.id}`}
+            className="font-medium hover:underline"
+            onMouseEnter={() => prefetchUser(user.id)}
+            onFocus={() => prefetchUser(user.id)}
+          >
+            {user.name}
+          </Link>
+        ),
+      },
+      {
+        header: 'Email',
+        accessor: (user: User) => user.email,
+      },
+      {
+        header: 'Organizations',
+        accessor: (user: User) => (
+          <div className="flex flex-wrap gap-1">
+            {user.organizations?.slice(0, 3).map((org) => (
+              <Badge key={org.id} variant="secondary">
+                {org.name}
+              </Badge>
+            ))}
+            {(user.organizations?.length ?? 0) > 3 && (
+              <Badge variant="outline">+{(user.organizations?.length ?? 0) - 3}</Badge>
+            )}
+          </div>
+        ),
+      },
+      {
+        header: '',
+        accessor: (user: User) => <UserActions user={user} />,
+        className: 'w-[50px]',
+      },
+    ],
+    [prefetchUser]
+  )
 
   return (
     <DataTable
@@ -72,26 +74,26 @@ export function UsersTable({ data, isLoading }: UsersTableProps): React.ReactEle
       keyExtractor={(u) => u.id}
       emptyMessage="No users found"
     />
-  );
+  )
 }
 
 const UserActions = memo(function UserActions({ user }: { user: User }): React.ReactElement {
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const deleteMutation = useDeleteUser();
-  const toast = useToast();
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const deleteMutation = useDeleteUser()
+  const toast = useToast()
 
   const handleDelete = (): void => {
     deleteMutation.mutate(user.id, {
       onSuccess: () => {
-        toast.success('User deleted successfully');
-        setIsDeleteOpen(false);
+        toast.success('User deleted successfully')
+        setIsDeleteOpen(false)
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(error.message)
       },
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -134,5 +136,5 @@ const UserActions = memo(function UserActions({ user }: { user: User }): React.R
         isPending={deleteMutation.isPending}
       />
     </>
-  );
-});
+  )
+})

@@ -78,7 +78,9 @@ async function initKeycloak(): Promise<void> {
     console.error('Keycloak initialization error:', err)
     if (err instanceof Error) {
       if (err.message.includes('Cannot find module')) {
-        store.setError('Keycloak SDK (keycloak-js) not installed. Please run: npm install keycloak-js')
+        store.setError(
+          'Keycloak SDK (keycloak-js) not installed. Please run: npm install keycloak-js'
+        )
       } else {
         store.setError(err.message)
       }

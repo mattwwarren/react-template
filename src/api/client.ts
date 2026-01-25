@@ -19,11 +19,7 @@ export class ApiError extends Error {
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
-    throw new ApiError(
-      response.status,
-      response.statusText,
-      body.detail ?? body.message
-    )
+    throw new ApiError(response.status, response.statusText, body.detail ?? body.message)
   }
 
   if (response.status === 204) {
@@ -33,10 +29,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export async function fetchApi<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> {
+export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`
   const response = await fetch(url, {
     ...options,

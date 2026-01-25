@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
 import { waitFor } from '@testing-library/react'
-import { useUsers, useUser, userKeys } from '../useUsers'
+import { describe, expect, it } from 'vitest'
 import { renderHookWithProviders } from '@/test/utils'
+import { userKeys, useUser, useUsers } from '../useUsers'
 
 describe('useUsers', () => {
   describe('useUsers hook', () => {

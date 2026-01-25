@@ -1,5 +1,5 @@
-import { faker } from './index'
 import type { Organization, OrganizationInfo } from '@/api/types'
+import { faker } from './index'
 
 export function createOrganization(overrides?: Partial<Organization>): Organization {
   const createdAt = faker.date.past().toISOString()

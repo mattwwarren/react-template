@@ -1,8 +1,8 @@
-import { userHandlers, resetUsers } from './users'
-import { organizationHandlers, resetOrganizations } from './organizations'
-import { membershipHandlers, resetMemberships } from './memberships'
-import { documentHandlers, resetDocuments } from './documents'
 import { authHandlers, resetAuth } from './auth'
+import { documentHandlers, resetDocuments } from './documents'
+import { membershipHandlers, resetMemberships } from './memberships'
+import { organizationHandlers, resetOrganizations } from './organizations'
+import { resetUsers, userHandlers } from './users'
 
 export const handlers = [
   ...authHandlers,

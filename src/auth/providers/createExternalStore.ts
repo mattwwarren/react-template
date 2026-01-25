@@ -16,11 +16,13 @@ export interface ExternalAuthState {
  *
  * This pattern is shared across all auth providers to reduce duplication.
  */
-export function createExternalAuthStore(initialState: ExternalAuthState = {
-  user: null,
-  isLoading: true,
-  error: null,
-}) {
+export function createExternalAuthStore(
+  initialState: ExternalAuthState = {
+    user: null,
+    isLoading: true,
+    error: null,
+  }
+) {
   let state = { ...initialState }
   const listeners = new Set<() => void>()
 

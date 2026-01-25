@@ -5,9 +5,9 @@ faker.seed(12345)
 
 export { faker }
 
+export * from './dataset'
+export * from './documents'
+export * from './memberships'
+export * from './organizations'
 // Re-export factories
 export * from './users'
-export * from './organizations'
-export * from './memberships'
-export * from './documents'
-export * from './dataset'

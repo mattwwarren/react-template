@@ -1,6 +1,6 @@
-import { http, HttpResponse } from 'msw'
+import { HttpResponse, http } from 'msw'
 import { z } from 'zod'
-import { mockOrganizations, createOrganization } from '../factories'
+import { createOrganization, mockOrganizations } from '../factories'
 import { extractPaginationFromUrl, paginateArray } from './utils'
 
 // Validation schemas for request bodies

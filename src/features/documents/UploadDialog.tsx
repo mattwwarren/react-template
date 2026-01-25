@@ -1,16 +1,16 @@
-import { useRef, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Upload } from 'lucide-react'
+import { useCallback, useRef } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/ui/dialog'
 import {
   Form,
   FormControl,
@@ -18,92 +18,87 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { useOrganizations, useUploadDocument, useToast } from '@/hooks';
+} from '@/components/ui/select'
+import { useOrganizations, useToast, useUploadDocument } from '@/hooks'
 
 const uploadSchema = z.object({
   organizationId: z.string().min(1, 'Organization is required'),
-});
+})
 
-type UploadFormData = z.infer<typeof uploadSchema>;
+type UploadFormData = z.infer<typeof uploadSchema>
 
 interface UploadDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function UploadDialog({
-  open,
-  onOpenChange,
-}: UploadDialogProps): React.ReactElement {
-  const toast = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export function UploadDialog({ open, onOpenChange }: UploadDialogProps): React.ReactElement {
+  const toast = useToast()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { data: orgsData, isLoading: orgsLoading } = useOrganizations({
     page: 1,
     size: 100,
-  });
-  const uploadMutation = useUploadDocument();
+  })
+  const uploadMutation = useUploadDocument()
 
   const form = useForm<UploadFormData>({
     resolver: zodResolver(uploadSchema),
     defaultValues: {
       organizationId: '',
     },
-  });
+  })
 
   const onFormSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>): void => {
-      event.preventDefault();
+      event.preventDefault()
       void form.handleSubmit((data: UploadFormData) => {
-        const files = fileInputRef.current?.files;
+        const files = fileInputRef.current?.files
         if (!files || files.length === 0) {
-          toast.error('Please select a file');
-          return;
+          toast.error('Please select a file')
+          return
         }
 
-        const file = files[0];
+        const file = files[0]
         if (!file) {
-          toast.error('Please select a file');
-          return;
+          toast.error('Please select a file')
+          return
         }
 
         uploadMutation.mutate(
           { file, organizationId: data.organizationId },
           {
             onSuccess: () => {
-              toast.success('Document uploaded successfully');
-              onOpenChange(false);
-              form.reset();
+              toast.success('Document uploaded successfully')
+              onOpenChange(false)
+              form.reset()
               if (fileInputRef.current) {
-                fileInputRef.current.value = '';
+                fileInputRef.current.value = ''
               }
             },
             onError: (error) => {
-              toast.error(error.message);
+              toast.error(error.message)
             },
           }
-        );
-      })();
+        )
+      })()
     },
     [toast, uploadMutation, onOpenChange, form]
-  );
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Upload Document</DialogTitle>
-          <DialogDescription>
-            Upload a file to an organization
-          </DialogDescription>
+          <DialogDescription>Upload a file to an organization</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={onFormSubmit} className="space-y-4">
@@ -151,5 +146,5 @@ export function UploadDialog({
         </Form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

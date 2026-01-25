@@ -1,26 +1,20 @@
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Pagination } from '@/components/shared';
-import { useUsers } from '@/hooks';
-import { getPaginationParams } from '@/lib/utils';
-import { UsersTable } from './UsersTable';
-import { UserDialog } from './UserDialog';
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Pagination } from '@/components/shared'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useUsers } from '@/hooks'
+import { getPaginationParams } from '@/lib/utils'
+import { UserDialog } from './UserDialog'
+import { UsersTable } from './UsersTable'
 
 export function UsersPage(): React.ReactElement {
-  const [searchParams] = useSearchParams();
-  const { page, size } = getPaginationParams(searchParams);
+  const [searchParams] = useSearchParams()
+  const { page, size } = getPaginationParams(searchParams)
 
-  const { data, isLoading } = useUsers({ page, size });
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const { data, isLoading } = useUsers({ page, size })
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
 
   return (
     <div className="space-y-6">
@@ -43,19 +37,14 @@ export function UsersPage(): React.ReactElement {
         <CardContent className="space-y-4">
           <UsersTable data={data?.items} isLoading={isLoading} />
           {data && data.pages > 1 && (
-            <Pagination
-              total={data.total}
-              page={data.page}
-              size={data.size}
-              pages={data.pages}
-            />
+            <Pagination total={data.total} page={data.page} size={data.size} pages={data.pages} />
           )}
         </CardContent>
       </Card>
 
       <UserDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
     </div>
-  );
+  )
 }
 
-export default UsersPage;
+export default UsersPage

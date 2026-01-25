@@ -1,17 +1,11 @@
-import { useState } from 'react';
-import { Upload, FileText } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { UploadDialog } from './UploadDialog';
+import { FileText, Upload } from 'lucide-react'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { UploadDialog } from './UploadDialog'
 
 export function DocumentsPage(): React.ReactElement {
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
 
   // Note: The API doesn't have a list documents endpoint
   // In a real app, you would either:
@@ -24,9 +18,7 @@ export function DocumentsPage(): React.ReactElement {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
-          <p className="text-muted-foreground">
-            Manage files and documents
-          </p>
+          <p className="text-muted-foreground">Manage files and documents</p>
         </div>
         <Button onClick={() => setIsUploadOpen(true)}>
           <Upload className="mr-2 h-4 w-4" />
@@ -55,16 +47,10 @@ export function DocumentsPage(): React.ReactElement {
         <Card>
           <CardHeader>
             <CardTitle>Upload Documents</CardTitle>
-            <CardDescription>
-              Upload files to organizations for storage
-            </CardDescription>
+            <CardDescription>Upload files to organizations for storage</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setIsUploadOpen(true)}
-            >
+            <Button variant="outline" className="w-full" onClick={() => setIsUploadOpen(true)}>
               <Upload className="mr-2 h-4 w-4" />
               Choose File to Upload
             </Button>
@@ -74,9 +60,7 @@ export function DocumentsPage(): React.ReactElement {
         <Card>
           <CardHeader>
             <CardTitle>Organization Documents</CardTitle>
-            <CardDescription>
-              View documents by organization
-            </CardDescription>
+            <CardDescription>View documents by organization</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
@@ -88,7 +72,7 @@ export function DocumentsPage(): React.ReactElement {
 
       <UploadDialog open={isUploadOpen} onOpenChange={setIsUploadOpen} />
     </div>
-  );
+  )
 }
 
-export default DocumentsPage;
+export default DocumentsPage

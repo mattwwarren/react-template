@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
 import { waitFor } from '@testing-library/react'
-import { useDocument, useUploadDocument, useDeleteDocument, documentKeys } from '../useDocuments'
-import { renderHookWithProviders } from '@/test/utils'
+import { describe, expect, it, vi } from 'vitest'
 import { mockDocuments } from '@/mocks/factories'
+import { renderHookWithProviders } from '@/test/utils'
+import { documentKeys, useDeleteDocument, useDocument, useUploadDocument } from '../useDocuments'
 
 describe('useDocuments', () => {
   // Use a real document ID from mock data

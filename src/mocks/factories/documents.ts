@@ -1,5 +1,5 @@
-import { faker } from './index'
 import type { Document } from '@/api/types'
+import { faker } from './index'
 
 const FILE_TYPES = [
   { ext: 'pdf', mime: 'application/pdf' },

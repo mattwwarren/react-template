@@ -1,45 +1,37 @@
-import { FileText, Download, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { getDocumentDownloadUrl, useDeleteDocument, useToast } from '@/hooks';
-import type { Document } from '@/api/types';
+import { Download, FileText, Trash2 } from 'lucide-react'
+import type { Document } from '@/api/types'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { getDocumentDownloadUrl, useDeleteDocument, useToast } from '@/hooks'
 
 interface DocumentsListProps {
-  documents: Document[];
+  documents: Document[]
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const size = sizes[i];
-  if (!size) return `${bytes} Bytes`;
-  return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${size}`;
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  const size = sizes[i]
+  if (!size) return `${bytes} Bytes`
+  return `${Math.round((bytes / k ** i) * 100) / 100} ${size}`
 }
 
-export function DocumentsList({
-  documents,
-}: DocumentsListProps): React.ReactElement {
-  const deleteMutation = useDeleteDocument();
-  const toast = useToast();
+export function DocumentsList({ documents }: DocumentsListProps): React.ReactElement {
+  const deleteMutation = useDeleteDocument()
+  const toast = useToast()
 
   const handleDelete = (doc: Document): void => {
     deleteMutation.mutate(doc.id, {
       onSuccess: () => {
-        toast.success('Document deleted successfully');
+        toast.success('Document deleted successfully')
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(error.message)
       },
-    });
-  };
+    })
+  }
 
   if (documents.length === 0) {
     return (
@@ -47,7 +39,7 @@ export function DocumentsList({
         <FileText className="mb-2 h-8 w-8" />
         <p>No documents uploaded yet</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -66,10 +58,7 @@ export function DocumentsList({
           <CardContent>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" asChild>
-                <a
-                  href={getDocumentDownloadUrl(doc.id)}
-                  download={doc.filename}
-                >
+                <a href={getDocumentDownloadUrl(doc.id)} download={doc.filename}>
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </a>
@@ -88,5 +77,5 @@ export function DocumentsList({
         </Card>
       ))}
     </div>
-  );
+  )
 }

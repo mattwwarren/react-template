@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -6,21 +7,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
+} from '@/components/ui/table'
 
 interface Column<T> {
-  header: string;
-  accessor: (row: T) => ReactNode;
-  className?: string;
+  header: string
+  accessor: (row: T) => ReactNode
+  className?: string
 }
 
 interface DataTableProps<T> {
-  columns: Column<T>[];
-  data: T[] | undefined;
-  isLoading: boolean;
-  keyExtractor: (row: T) => string;
-  emptyMessage?: string;
+  columns: Column<T>[]
+  data: T[] | undefined
+  isLoading: boolean
+  keyExtractor: (row: T) => string
+  emptyMessage?: string
 }
 
 export function DataTable<T>({
@@ -37,7 +37,7 @@ export function DataTable<T>({
           <Skeleton key={i} className="h-12 w-full" />
         ))}
       </div>
-    );
+    )
   }
 
   if (!data || data.length === 0) {
@@ -45,7 +45,7 @@ export function DataTable<T>({
       <div className="flex h-32 items-center justify-center text-muted-foreground">
         {emptyMessage}
       </div>
-    );
+    )
   }
 
   return (
@@ -71,5 +71,5 @@ export function DataTable<T>({
         ))}
       </TableBody>
     </Table>
-  );
+  )
 }

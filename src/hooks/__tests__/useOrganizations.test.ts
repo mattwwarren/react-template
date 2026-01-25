@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
 import { waitFor } from '@testing-library/react'
-import { useOrganizations, useOrganization, organizationKeys } from '../useOrganizations'
+import { describe, expect, it } from 'vitest'
 import { renderHookWithProviders } from '@/test/utils'
+import { organizationKeys, useOrganization, useOrganizations } from '../useOrganizations'
 
 describe('useOrganizations', () => {
   describe('useOrganizations hook', () => {
@@ -103,7 +103,11 @@ describe('useOrganizations', () => {
     it('generates correct query keys', () => {
       expect(organizationKeys.all).toEqual(['organizations'])
       expect(organizationKeys.lists()).toEqual(['organizations', 'list'])
-      expect(organizationKeys.list({ page: 1, size: 10 })).toEqual(['organizations', 'list', { page: 1, size: 10 }])
+      expect(organizationKeys.list({ page: 1, size: 10 })).toEqual([
+        'organizations',
+        'list',
+        { page: 1, size: 10 },
+      ])
       expect(organizationKeys.details()).toEqual(['organizations', 'detail'])
       expect(organizationKeys.detail('123')).toEqual(['organizations', 'detail', '123'])
     })

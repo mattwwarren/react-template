@@ -1,15 +1,13 @@
-import { NavLink } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { navigation } from './navigation';
+import { NavLink } from 'react-router-dom'
+import { SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { cn } from '@/lib/utils'
+import { navigation } from './navigation'
 
 export function MobileSidebar(): React.ReactElement {
   return (
     <div className="flex h-full flex-col">
       <SheetHeader className="border-b px-6 py-4">
-        <SheetTitle className="text-left text-xl font-bold">
-          React Template
-        </SheetTitle>
+        <SheetTitle className="text-left text-xl font-bold">React Template</SheetTitle>
       </SheetHeader>
       <nav className="space-y-1 p-4">
         {navigation.map((item) => (
@@ -31,5 +29,5 @@ export function MobileSidebar(): React.ReactElement {
         ))}
       </nav>
     </div>
-  );
+  )
 }

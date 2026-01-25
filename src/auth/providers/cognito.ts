@@ -94,7 +94,9 @@ async function initCognito(): Promise<void> {
   } catch (err) {
     if (err instanceof Error) {
       if (err.message.includes('Cannot find module') || err.message.includes('aws-amplify')) {
-        store.setError('AWS Amplify SDK not installed. Please run: npm install aws-amplify @aws-amplify/auth')
+        store.setError(
+          'AWS Amplify SDK not installed. Please run: npm install aws-amplify @aws-amplify/auth'
+        )
       } else if (!err.message.includes('No current user')) {
         // "No current user" is expected when not logged in
         store.setError(err.message)
@@ -160,21 +162,23 @@ export function createCognitoProvider(): AuthProviderImplementation {
     useEffect(() => {
       let cleanup = (): void => {}
 
-      void import('aws-amplify/auth').then(({ Hub }) => {
-        const unsubscribe = Hub.listen('auth', ({ payload }) => {
-          switch (payload.event) {
-            case 'signedIn':
-              void initCognito()
-              break
-            case 'signedOut':
-              store.setUser(null)
-              break
-          }
+      void import('aws-amplify/auth')
+        .then(({ Hub }) => {
+          const unsubscribe = Hub.listen('auth', ({ payload }) => {
+            switch (payload.event) {
+              case 'signedIn':
+                void initCognito()
+                break
+              case 'signedOut':
+                store.setUser(null)
+                break
+            }
+          })
+          cleanup = unsubscribe
         })
-        cleanup = unsubscribe
-      }).catch(() => {
-        // SDK not available
-      })
+        .catch(() => {
+          // SDK not available
+        })
 
       return () => cleanup()
     }, [])

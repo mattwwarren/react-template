@@ -1,8 +1,13 @@
-import { describe, it, expect, vi } from 'vitest'
 import { waitFor } from '@testing-library/react'
-import { useMemberships, useCreateMembership, useDeleteMembership, membershipKeys } from '../useMemberships'
-import { renderHookWithProviders } from '@/test/utils'
+import { describe, expect, it, vi } from 'vitest'
 import { mockMemberships } from '@/mocks/factories'
+import { renderHookWithProviders } from '@/test/utils'
+import {
+  membershipKeys,
+  useCreateMembership,
+  useDeleteMembership,
+  useMemberships,
+} from '../useMemberships'
 
 describe('useMemberships', () => {
   // Use a real membership ID from mock data
@@ -163,7 +168,11 @@ describe('useMemberships', () => {
     it('generates correct query keys', () => {
       expect(membershipKeys.all).toEqual(['memberships'])
       expect(membershipKeys.lists()).toEqual(['memberships', 'list'])
-      expect(membershipKeys.list({ page: 1, size: 10 })).toEqual(['memberships', 'list', { page: 1, size: 10 }])
+      expect(membershipKeys.list({ page: 1, size: 10 })).toEqual([
+        'memberships',
+        'list',
+        { page: 1, size: 10 },
+      ])
     })
   })
 })

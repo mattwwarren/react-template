@@ -15,11 +15,13 @@
         "useHookAtTopLevel": "error"
       },
       "suspicious": {
-        "noExplicitAny": "warn"
+        "noExplicitAny": "warn",
+        "noArrayIndexKey": "warn"
       },
       "style": {
         "useConst": "warn",
-        "noNonNullAssertion": "warn"
+        "noNonNullAssertion": "warn",
+        "useTemplate": "warn"
       }
     }
   },
@@ -41,6 +43,17 @@
       "indentWidth": 2
     }
   },
+  "css": {
+    "parser": {
+      "cssModules": true
+    },
+    "linter": {
+      "enabled": false
+    },
+    "formatter": {
+      "enabled": false
+    }
+  },
   "files": {
     "includes": [
       "**",
@@ -48,8 +61,11 @@
       "!**/dist",
       "!**/.templatized",
       "!**/coverage",
+      "!**/playwright-report",
+      "!**/test-results",
       "!**/public/mockServiceWorker.js",
-      "!**/src/api/generated"
+      "!**/src/api/generated",
+      "!**/*.css"
     ]
   }
 }

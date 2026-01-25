@@ -1,12 +1,19 @@
-import { fetchApi } from './client';
-import type { Organization, OrganizationCreate, OrganizationUpdate, PaginatedOrganizations, PaginationParams } from './types';
+import { fetchApi } from './client'
+import type {
+  Organization,
+  OrganizationCreate,
+  OrganizationUpdate,
+  PaginatedOrganizations,
+  PaginationParams,
+} from './types'
 
 export const organizationsApi = {
   list: (params: PaginationParams = {}) =>
-    fetchApi<PaginatedOrganizations>(`/organizations?page=${params.page ?? 1}&size=${params.size ?? 10}`),
+    fetchApi<PaginatedOrganizations>(
+      `/organizations?page=${params.page ?? 1}&size=${params.size ?? 10}`
+    ),
 
-  get: (id: string) =>
-    fetchApi<Organization>(`/organizations/${id}`),
+  get: (id: string) => fetchApi<Organization>(`/organizations/${id}`),
 
   create: (data: OrganizationCreate) =>
     fetchApi<Organization>('/organizations', {
@@ -20,6 +27,5 @@ export const organizationsApi = {
       body: JSON.stringify(data),
     }),
 
-  delete: (id: string) =>
-    fetchApi<void>(`/organizations/${id}`, { method: 'DELETE' }),
-};
+  delete: (id: string) => fetchApi<void>(`/organizations/${id}`, { method: 'DELETE' }),
+}

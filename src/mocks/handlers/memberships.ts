@@ -1,6 +1,6 @@
-import { http, HttpResponse } from 'msw'
-import { mockMemberships, createMembership } from '../factories'
+import { HttpResponse, http } from 'msw'
 import type { MembershipCreate, MembershipUpdate } from '@/api/types'
+import { createMembership, mockMemberships } from '../factories'
 
 // Mutable copy for CRUD operations
 let memberships = [...mockMemberships]

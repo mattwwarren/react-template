@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { UsersPage } from '../UsersPage'
+import { describe, expect, it } from 'vitest'
 import { renderWithProviders } from '@/test/utils'
+import { UsersPage } from '../UsersPage'
 
 describe('UsersPage', () => {
   it('renders page title and description', async () => {

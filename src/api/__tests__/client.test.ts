@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { fetchApi, ApiError } from '../client'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ApiError, fetchApi } from '../client'
 
 describe('API client', () => {
   // Save original fetch

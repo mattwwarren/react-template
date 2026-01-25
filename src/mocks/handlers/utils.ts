@@ -12,11 +12,11 @@ export { getPaginationFromUrl as extractPaginationFromUrl, PAGINATION_DEFAULTS }
  * Generic paginated response type matching backend Page_* schemas.
  */
 export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-  pages: number;
+  items: T[]
+  total: number
+  page: number
+  size: number
+  pages: number
 }
 
 /**
@@ -25,17 +25,13 @@ export interface PaginatedResponse<T> {
  * @param page - Page number (1-indexed)
  * @param size - Page size
  */
-export function paginateArray<T>(
-  items: T[],
-  page: number,
-  size: number
-): PaginatedResponse<T> {
-  const start = (page - 1) * size;
+export function paginateArray<T>(items: T[], page: number, size: number): PaginatedResponse<T> {
+  const start = (page - 1) * size
   return {
     items: items.slice(start, start + size),
     total: items.length,
     page,
     size,
     pages: Math.ceil(items.length / size),
-  };
+  }
 }

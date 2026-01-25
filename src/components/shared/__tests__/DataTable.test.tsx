@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
 import { screen } from '@testing-library/react'
-import { DataTable } from '../DataTable'
+import { describe, expect, it } from 'vitest'
 import { renderWithProviders } from '@/test/utils'
+import { DataTable } from '../DataTable'
 
 interface TestRow {
   id: string
@@ -63,12 +63,7 @@ describe('DataTable', () => {
   describe('empty state', () => {
     it('shows default empty message when no data', () => {
       renderWithProviders(
-        <DataTable
-          columns={columns}
-          data={[]}
-          isLoading={false}
-          keyExtractor={keyExtractor}
-        />
+        <DataTable columns={columns} data={[]} isLoading={false} keyExtractor={keyExtractor} />
       )
 
       expect(screen.getByText('No data found')).toBeInTheDocument()
@@ -105,12 +100,7 @@ describe('DataTable', () => {
 
     it('does not show table when empty', () => {
       renderWithProviders(
-        <DataTable
-          columns={columns}
-          data={[]}
-          isLoading={false}
-          keyExtractor={keyExtractor}
-        />
+        <DataTable columns={columns} data={[]} isLoading={false} keyExtractor={keyExtractor} />
       )
 
       expect(screen.queryByRole('table')).not.toBeInTheDocument()

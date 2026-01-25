@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Pagination } from '../Pagination'
+import { describe, expect, it } from 'vitest'
 import { renderWithProviders } from '@/test/utils'
+import { Pagination } from '../Pagination'
 
 describe('Pagination', () => {
   const defaultProps = {

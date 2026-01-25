@@ -1,61 +1,64 @@
-import React, { useState, useMemo, memo } from 'react';
-import { Link } from 'react-router-dom';
-import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import type React from 'react'
+import { memo, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import type { Organization } from '@/api/types'
+import { DataTable, DeleteConfirmDialog } from '@/components/shared'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { DataTable, DeleteConfirmDialog } from '@/components/shared';
-import { useDeleteOrganization, usePrefetchOrganization, useToast } from '@/hooks';
-import { OrganizationDialog } from './OrganizationDialog';
-import type { Organization } from '@/api/types';
+} from '@/components/ui/dropdown-menu'
+import { useDeleteOrganization, usePrefetchOrganization, useToast } from '@/hooks'
+import { OrganizationDialog } from './OrganizationDialog'
 
 interface OrganizationsTableProps {
-  data: Organization[] | undefined;
-  isLoading: boolean;
+  data: Organization[] | undefined
+  isLoading: boolean
 }
 
 export function OrganizationsTable({
   data,
   isLoading,
 }: OrganizationsTableProps): React.ReactElement {
-  const prefetchOrganization = usePrefetchOrganization();
+  const prefetchOrganization = usePrefetchOrganization()
 
-  const columns = useMemo(() => [
-    {
-      header: 'Name',
-      accessor: (org: Organization) => (
-        <Link
-          to={`/organizations/${org.id}`}
-          className="font-medium hover:underline"
-          onMouseEnter={() => prefetchOrganization(org.id)}
-          onFocus={() => prefetchOrganization(org.id)}
-        >
-          {org.name}
-        </Link>
-      ),
-    },
-    {
-      header: 'Members',
-      accessor: (org: Organization) => (
-        <Badge variant="secondary">{org.users?.length ?? 0} members</Badge>
-      ),
-    },
-    {
-      header: 'Created',
-      accessor: (org: Organization) =>
-        new Date(org.created_at).toLocaleDateString(),
-    },
-    {
-      header: '',
-      accessor: (org: Organization) => <OrganizationActions organization={org} />,
-      className: 'w-[50px]',
-    },
-  ], [prefetchOrganization]);
+  const columns = useMemo(
+    () => [
+      {
+        header: 'Name',
+        accessor: (org: Organization) => (
+          <Link
+            to={`/organizations/${org.id}`}
+            className="font-medium hover:underline"
+            onMouseEnter={() => prefetchOrganization(org.id)}
+            onFocus={() => prefetchOrganization(org.id)}
+          >
+            {org.name}
+          </Link>
+        ),
+      },
+      {
+        header: 'Members',
+        accessor: (org: Organization) => (
+          <Badge variant="secondary">{org.users?.length ?? 0} members</Badge>
+        ),
+      },
+      {
+        header: 'Created',
+        accessor: (org: Organization) => new Date(org.created_at).toLocaleDateString(),
+      },
+      {
+        header: '',
+        accessor: (org: Organization) => <OrganizationActions organization={org} />,
+        className: 'w-[50px]',
+      },
+    ],
+    [prefetchOrganization]
+  )
 
   return (
     <DataTable
@@ -65,30 +68,30 @@ export function OrganizationsTable({
       keyExtractor={(o) => o.id}
       emptyMessage="No organizations found"
     />
-  );
+  )
 }
 
 const OrganizationActions = memo(function OrganizationActions({
   organization,
 }: {
-  organization: Organization;
+  organization: Organization
 }): React.ReactElement {
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const deleteMutation = useDeleteOrganization();
-  const toast = useToast();
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const deleteMutation = useDeleteOrganization()
+  const toast = useToast()
 
   const handleDelete = (): void => {
     deleteMutation.mutate(organization.id, {
       onSuccess: () => {
-        toast.success('Organization deleted successfully');
-        setIsDeleteOpen(false);
+        toast.success('Organization deleted successfully')
+        setIsDeleteOpen(false)
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(error.message)
       },
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -135,5 +138,5 @@ const OrganizationActions = memo(function OrganizationActions({
         isPending={deleteMutation.isPending}
       />
     </>
-  );
-});
+  )
+})

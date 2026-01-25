@@ -14,7 +14,9 @@ export { createMockProvider as createMockProviderSync }
  * In a Copier-generated project, only the selected provider SDK is installed.
  * In the template, SDKs may not be installed - we fall back to mock gracefully.
  */
-export async function createAuthProvider(type: AuthProviderType): Promise<AuthProviderImplementation> {
+export async function createAuthProvider(
+  type: AuthProviderType
+): Promise<AuthProviderImplementation> {
   switch (type) {
     case 'mock':
       return createMockProvider()

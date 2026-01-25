@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { UserForm } from '../UserForm'
+import { describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@/test/utils'
+import { UserForm } from '../UserForm'
 
 // Mock sonner toast
 vi.mock('sonner', () => ({

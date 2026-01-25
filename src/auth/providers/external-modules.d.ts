@@ -130,9 +130,6 @@ declare module 'aws-amplify/auth' {
   export function signOut(): Promise<void>
 
   export const Hub: {
-    listen(
-      channel: string,
-      callback: (data: { payload: { event: string } }) => void
-    ): () => void
+    listen(channel: string, callback: (data: { payload: { event: string } }) => void): () => void
   }
 }

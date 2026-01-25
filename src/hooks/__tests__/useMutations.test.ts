@@ -1,7 +1,14 @@
-import { describe, it, expect } from 'vitest'
-import { waitFor, act } from '@testing-library/react'
-import { useUsers, useUser, useCreateUser, useUpdateUser, useDeleteUser, userKeys } from '../useUsers'
-import { renderHookWithProviders, createTestQueryClient } from '@/test/utils'
+import { act, waitFor } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+import { createTestQueryClient, renderHookWithProviders } from '@/test/utils'
+import {
+  useCreateUser,
+  useDeleteUser,
+  userKeys,
+  useUpdateUser,
+  useUser,
+  useUsers,
+} from '../useUsers'
 
 describe('User mutations', () => {
   describe('useCreateUser', () => {
@@ -63,9 +70,7 @@ describe('User mutations', () => {
 
       // Note: Current MSW handlers don't validate - this tests basic mutation error handling
       // After adding validation in step 3, this should return an error
-      await waitFor(() =>
-        expect(result.current.isSuccess || result.current.isError).toBe(true)
-      )
+      await waitFor(() => expect(result.current.isSuccess || result.current.isError).toBe(true))
     })
   })
 

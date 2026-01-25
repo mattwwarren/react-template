@@ -1,42 +1,36 @@
-import { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DeleteConfirmDialog } from '@/components/shared';
-import { useUser, useDeleteUser, useToast } from '@/hooks';
-import { UserDialog } from './UserDialog';
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { DeleteConfirmDialog } from '@/components/shared'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useDeleteUser, useToast, useUser } from '@/hooks'
+import { UserDialog } from './UserDialog'
 
 export function UserDetailPage(): React.ReactElement {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { data: user, isLoading } = useUser(id ?? '');
-  const deleteMutation = useDeleteUser();
-  const toast = useToast();
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { data: user, isLoading } = useUser(id ?? '')
+  const deleteMutation = useDeleteUser()
+  const toast = useToast()
 
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
   const handleDelete = (): void => {
-    if (!id) return;
+    if (!id) return
     deleteMutation.mutate(id, {
       onSuccess: () => {
-        toast.success('User deleted successfully');
-        navigate('/users');
+        toast.success('User deleted successfully')
+        navigate('/users')
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(error.message)
       },
-    });
-  };
+    })
+  }
 
   if (isLoading) {
     return (
@@ -53,7 +47,7 @@ export function UserDetailPage(): React.ReactElement {
           <Skeleton className="h-48" />
         </div>
       </div>
-    );
+    )
   }
 
   if (!user) {
@@ -75,7 +69,7 @@ export function UserDetailPage(): React.ReactElement {
           </CardContent>
         </Card>
       </div>
-    );
+    )
   }
 
   return (
@@ -97,10 +91,7 @@ export function UserDetailPage(): React.ReactElement {
             <Pencil className="mr-2 h-4 w-4" />
             Edit
           </Button>
-          <Button
-            variant="destructive"
-            onClick={() => setIsDeleteOpen(true)}
-          >
+          <Button variant="destructive" onClick={() => setIsDeleteOpen(true)}>
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
           </Button>
@@ -126,15 +117,11 @@ export function UserDetailPage(): React.ReactElement {
               <code className="text-xs">{user.id}</code>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Created
-              </p>
+              <p className="text-sm font-medium text-muted-foreground">Created</p>
               <p>{new Date(user.created_at).toLocaleDateString()}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Updated
-              </p>
+              <p className="text-sm font-medium text-muted-foreground">Updated</p>
               <p>{new Date(user.updated_at).toLocaleDateString()}</p>
             </div>
           </CardContent>
@@ -153,10 +140,7 @@ export function UserDetailPage(): React.ReactElement {
                     key={org.id}
                     className="flex items-center justify-between rounded-md border p-3"
                   >
-                    <Link
-                      to={`/organizations/${org.id}`}
-                      className="font-medium hover:underline"
-                    >
+                    <Link to={`/organizations/${org.id}`} className="font-medium hover:underline">
                       {org.name}
                     </Link>
                     <Badge variant="secondary">Member</Badge>
@@ -164,9 +148,7 @@ export function UserDetailPage(): React.ReactElement {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                No organization memberships
-              </p>
+              <p className="text-sm text-muted-foreground">No organization memberships</p>
             )}
           </CardContent>
         </Card>
@@ -183,7 +165,7 @@ export function UserDetailPage(): React.ReactElement {
         isPending={deleteMutation.isPending}
       />
     </div>
-  );
+  )
 }
 
-export default UserDetailPage;
+export default UserDetailPage

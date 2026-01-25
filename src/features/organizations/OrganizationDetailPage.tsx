@@ -1,42 +1,36 @@
-import { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Pencil, Trash2, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DeleteConfirmDialog } from '@/components/shared';
-import { useOrganization, useDeleteOrganization, useToast } from '@/hooks';
-import { OrganizationDialog } from './OrganizationDialog';
-import { MembersList } from './MembersList';
+import { ArrowLeft, Pencil, Trash2, Users } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { DeleteConfirmDialog } from '@/components/shared'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useDeleteOrganization, useOrganization, useToast } from '@/hooks'
+import { MembersList } from './MembersList'
+import { OrganizationDialog } from './OrganizationDialog'
 
 export function OrganizationDetailPage(): React.ReactElement {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { data: organization, isLoading } = useOrganization(id ?? '');
-  const deleteMutation = useDeleteOrganization();
-  const toast = useToast();
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { data: organization, isLoading } = useOrganization(id ?? '')
+  const deleteMutation = useDeleteOrganization()
+  const toast = useToast()
 
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
   const handleDelete = (): void => {
-    if (!id) return;
+    if (!id) return
     deleteMutation.mutate(id, {
       onSuccess: () => {
-        toast.success('Organization deleted successfully');
-        navigate('/organizations');
+        toast.success('Organization deleted successfully')
+        navigate('/organizations')
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(error.message)
       },
-    });
-  };
+    })
+  }
 
   if (isLoading) {
     return (
@@ -53,7 +47,7 @@ export function OrganizationDetailPage(): React.ReactElement {
           <Skeleton className="h-48" />
         </div>
       </div>
-    );
+    )
   }
 
   if (!organization) {
@@ -70,13 +64,12 @@ export function OrganizationDetailPage(): React.ReactElement {
         <Card>
           <CardContent className="py-8">
             <p className="text-center text-muted-foreground">
-              The organization you&apos;re looking for doesn&apos;t exist or has
-              been deleted.
+              The organization you&apos;re looking for doesn&apos;t exist or has been deleted.
             </p>
           </CardContent>
         </Card>
       </div>
-    );
+    )
   }
 
   return (
@@ -89,12 +82,8 @@ export function OrganizationDetailPage(): React.ReactElement {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {organization.name}
-            </h1>
-            <p className="text-muted-foreground">
-              {organization.users?.length ?? 0} members
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight">{organization.name}</h1>
+            <p className="text-muted-foreground">{organization.users?.length ?? 0} members</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -124,15 +113,11 @@ export function OrganizationDetailPage(): React.ReactElement {
               <code className="text-xs">{organization.id}</code>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Created
-              </p>
+              <p className="text-sm font-medium text-muted-foreground">Created</p>
               <p>{new Date(organization.created_at).toLocaleDateString()}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Updated
-              </p>
+              <p className="text-sm font-medium text-muted-foreground">Updated</p>
               <p>{new Date(organization.updated_at).toLocaleDateString()}</p>
             </div>
           </CardContent>
@@ -146,9 +131,7 @@ export function OrganizationDetailPage(): React.ReactElement {
                   <Users className="h-5 w-5" />
                   Members
                 </CardTitle>
-                <CardDescription>
-                  Users who belong to this organization
-                </CardDescription>
+                <CardDescription>Users who belong to this organization</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -173,7 +156,7 @@ export function OrganizationDetailPage(): React.ReactElement {
         isPending={deleteMutation.isPending}
       />
     </div>
-  );
+  )
 }
 
-export default OrganizationDetailPage;
+export default OrganizationDetailPage

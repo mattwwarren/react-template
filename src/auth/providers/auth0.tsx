@@ -90,7 +90,9 @@ async function loadAuth0Sdk(): Promise<boolean> {
     Auth0ProviderComponent = auth0React.Auth0Provider
     return true
   } catch {
-    console.error('Auth0 SDK (@auth0/auth0-react) not installed. Please run: npm install @auth0/auth0-react')
+    console.error(
+      'Auth0 SDK (@auth0/auth0-react) not installed. Please run: npm install @auth0/auth0-react'
+    )
     currentState = {
       user: null,
       isAuthenticated: false,
@@ -200,11 +202,7 @@ export function createAuth0Provider(): AuthProviderImplementation {
     }
 
     return (
-      <Provider
-        domain={config.domain}
-        clientId={config.clientId}
-        authorizationParams={authParams}
-      >
+      <Provider domain={config.domain} clientId={config.clientId} authorizationParams={authParams}>
         <Auth0ContextBridge>{children}</Auth0ContextBridge>
       </Provider>
     )
@@ -223,7 +221,11 @@ export function createAuth0Provider(): AuthProviderImplementation {
  * This component always calls useAuth0 hook (unconditionally).
  * It should only be rendered when the SDK is loaded and useAuth0Hook is available.
  */
-function Auth0ContextBridgeWithHook({ children }: { children: React.ReactNode }): React.ReactElement {
+function Auth0ContextBridgeWithHook({
+  children,
+}: {
+  children: React.ReactNode
+}): React.ReactElement {
   // useAuth0Hook is guaranteed to be non-null when this component renders
   // (only rendered inside Auth0Provider after SDK loads)
   const context = useAuth0Hook!()

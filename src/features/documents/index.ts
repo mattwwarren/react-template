@@ -1,3 +1,3 @@
-export { DocumentsPage } from './DocumentsPage';
-export { UploadDialog } from './UploadDialog';
-export { DocumentsList } from './DocumentsList';
+export { DocumentsList } from './DocumentsList'
+export { DocumentsPage } from './DocumentsPage'
+export { UploadDialog } from './UploadDialog'

@@ -1,12 +1,11 @@
-import { fetchApi } from './client';
-import type { User, UserCreate, UserUpdate, PaginatedUsers, PaginationParams } from './types';
+import { fetchApi } from './client'
+import type { PaginatedUsers, PaginationParams, User, UserCreate, UserUpdate } from './types'
 
 export const usersApi = {
   list: (params: PaginationParams = {}) =>
     fetchApi<PaginatedUsers>(`/users?page=${params.page ?? 1}&size=${params.size ?? 10}`),
 
-  get: (id: string) =>
-    fetchApi<User>(`/users/${id}`),
+  get: (id: string) => fetchApi<User>(`/users/${id}`),
 
   create: (data: UserCreate) =>
     fetchApi<User>('/users', {
@@ -20,6 +19,5 @@ export const usersApi = {
       body: JSON.stringify(data),
     }),
 
-  delete: (id: string) =>
-    fetchApi<void>(`/users/${id}`, { method: 'DELETE' }),
-};
+  delete: (id: string) => fetchApi<void>(`/users/${id}`, { method: 'DELETE' }),
+}

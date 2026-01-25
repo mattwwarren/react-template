@@ -1,31 +1,26 @@
-import { useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
 
 interface PaginationProps {
-  total: number;
-  page: number;
-  size: number;
-  pages: number;
+  total: number
+  page: number
+  size: number
+  pages: number
 }
 
-export function Pagination({
-  total,
-  page,
-  size,
-  pages,
-}: PaginationProps): React.ReactElement {
-  const [, setSearchParams] = useSearchParams();
+export function Pagination({ total, page, size, pages }: PaginationProps): React.ReactElement {
+  const [, setSearchParams] = useSearchParams()
 
   const handlePageChange = (newPage: number): void => {
     setSearchParams((prev) => {
-      prev.set('page', newPage.toString());
-      return prev;
-    });
-  };
+      prev.set('page', newPage.toString())
+      return prev
+    })
+  }
 
-  const startItem = (page - 1) * size + 1;
-  const endItem = Math.min(page * size, total);
+  const startItem = (page - 1) * size + 1
+  const endItem = Math.min(page * size, total)
 
   return (
     <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
@@ -56,5 +51,5 @@ export function Pagination({
         </Button>
       </div>
     </div>
-  );
+  )
 }

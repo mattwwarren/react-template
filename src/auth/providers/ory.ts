@@ -39,7 +39,9 @@ async function createOryClient(): Promise<OryFrontendApi | null> {
     })
     return new FrontendApi(oryConfig)
   } catch {
-    console.error('Ory SDK (@ory/client-fetch) not installed. Please run: npm install @ory/client-fetch')
+    console.error(
+      'Ory SDK (@ory/client-fetch) not installed. Please run: npm install @ory/client-fetch'
+    )
     return null
   }
 }
@@ -59,7 +61,8 @@ async function checkSession(): Promise<void> {
     const traits = session.identity.traits
     const firstName = traits.name?.first || ''
     const lastName = traits.name?.last || ''
-    const name = [firstName, lastName].filter(Boolean).join(' ') || traits.email.split('@')[0] || 'User'
+    const name =
+      [firstName, lastName].filter(Boolean).join(' ') || traits.email.split('@')[0] || 'User'
 
     store.setUser({
       id: session.identity.id,
