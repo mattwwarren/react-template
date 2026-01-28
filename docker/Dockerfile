@@ -12,8 +12,12 @@ COPY package*.json ./
 # Stage: dev - Development server with hot reload
 # ============================================================================
 FROM base AS dev
+# Use existing node user (UID 1000, GID 1000)
 RUN npm ci
 COPY . .
+# Set ownership for node user
+RUN chown -R node:node /app
+USER node
 EXPOSE 5173
 ENV NODE_ENV=development
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

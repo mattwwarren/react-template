@@ -13,7 +13,6 @@ if ! k3d cluster list | grep -q "^${cluster_name}\\b"; then
   k3d cluster create "${cluster_name}" \
     --agents 1 \
     --servers 1 \
-    -p "5173:80@loadbalancer" \
     --registry-create "${cluster_name}-registry:5000"
 fi
 

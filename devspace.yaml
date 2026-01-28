@@ -1,21 +1,21 @@
 version: v2beta1
-name: "react_template"
+name: "react-template"
 
 vars:
   CLUSTER_NAME:
-    default: "react_template"
+    default: "react-template"
     source: env
   NAMESPACE:
     default: warren-enterprises-ltd
     source: env
   IMAGE_NAME:
-    default: "react_template"
+    default: "react-template"
     source: env
   IMAGE_TAG:
     default: dev
     source: env
   APP_NAME:
-    default: "react_template"
+    default: "react-template"
     source: env
   ENVIRONMENT:
     default: dev
@@ -24,6 +24,9 @@ vars:
   API_URL:
     default: "http://fastapi-template.warren-enterprises-ltd.svc.cluster.local"
     source: env
+
+localRegistry:
+  enabled: false
 
 images:
   app:
@@ -37,29 +40,43 @@ images:
 pipelines:
   deploy:
     run: |-
-      bash scripts/k3d-up.sh
-      export KUBECONFIG="$(k3d kubeconfig write ${CLUSTER_NAME})"
-      kubectl config use-context "k3d-${CLUSTER_NAME}"
-      for _ in $(seq 1 30); do
-        if kubectl get namespaces >/dev/null 2>&1; then
-          break
-        fi
-        sleep 1
-      done
-      create_deployments --all
+      if is_dependency; then
+        echo "Running as dependency - deploying frontend only"
+        create_deployments frontend
+      else
+        echo "Running standalone - full setup"
+        bash scripts/k3d-up.sh
+        export KUBECONFIG="$(k3d kubeconfig write ${CLUSTER_NAME})"
+        kubectl config use-context "k3d-${CLUSTER_NAME}"
+        for _ in $(seq 1 30); do
+          if kubectl get namespaces >/dev/null 2>&1; then
+            break
+          fi
+          sleep 1
+        done
+        kubectl create namespace "${NAMESPACE}" 2>/dev/null || true
+        create_deployments --all
+      fi
   dev:
     run: |-
-      bash scripts/k3d-up.sh
-      export KUBECONFIG="$(k3d kubeconfig write ${CLUSTER_NAME})"
-      kubectl config use-context "k3d-${CLUSTER_NAME}"
-      for _ in $(seq 1 30); do
-        if kubectl get namespaces >/dev/null 2>&1; then
-          break
-        fi
-        sleep 1
-      done
-      create_deployments --all
-      start_dev --all
+      if is_dependency; then
+        echo "Running as dependency - starting app dev mode"
+        start_dev ui
+      else
+        echo "Running standalone - full dev setup"
+        bash scripts/k3d-up.sh
+        export KUBECONFIG="$(k3d kubeconfig write ${CLUSTER_NAME})"
+        kubectl config use-context "k3d-${CLUSTER_NAME}"
+        for _ in $(seq 1 30); do
+          if kubectl get namespaces >/dev/null 2>&1; then
+            break
+          fi
+          sleep 1
+        done
+        kubectl create namespace "${NAMESPACE}" 2>/dev/null || true
+        create_deployments --all
+        start_dev --all
+      fi
 
 dev:
   ui:
@@ -69,15 +86,31 @@ dev:
       - port: "5173"
     sync:
       - path: ./src:/app/src
-        excludeFile: .gitignore
       - path: ./public:/app/public
-        excludeFile: .gitignore
       - path: ./index.html:/app/index.html
         file: true
 
-hooks: []
+hooks:
+  - events: ["after:build"]
+    command: |-
+      if k3d cluster list | grep -q "^${CLUSTER_NAME} "; then
+        k3d image import ${runtime.images.app.image}:${runtime.images.app.tag} -c ${CLUSTER_NAME}
+      else
+        echo "Skipping image import - cluster ${CLUSTER_NAME} not found (running as dependency)"
+      fi
 
 commands:
+  init:
+    description: "Initialize standalone cluster and context"
+    command: bash
+    args:
+      - -c
+      - |
+        bash scripts/k3d-up.sh
+        export KUBECONFIG="$(k3d kubeconfig write ${CLUSTER_NAME})"
+        kubectl config use-context "k3d-${CLUSTER_NAME}"
+        kubectl create namespace "${NAMESPACE}" 2>/dev/null || true
+        echo "Cluster ${CLUSTER_NAME} ready. Run 'devspace dev' to start."
   build-prod:
     description: "Build production Docker image"
     command: bash
@@ -86,17 +119,19 @@ commands:
       - |
         docker build -f docker/Dockerfile --target prod -t ${IMAGE_NAME}:prod .
   k3d-down:
-    description: "Delete the local k3d cluster"
+    description: "Delete the local k3d cluster and clear cache"
     command: bash
     args:
       - -c
       - |
         bash scripts/k3d-down.sh
+        rm -f .devspace/cache.yaml
+        echo "Cache cleared"
 
 # Deployment definitions
 
 deployments:
-  app:
+  frontend:
     namespace: ${NAMESPACE}
     helm:
       chart:
@@ -109,7 +144,7 @@ deployments:
             image: ${runtime.images.app.image}:${runtime.images.app.tag}
             imagePullPolicy: IfNotPresent
             ports:
-              - containerPort: "5173"
+              - containerPort: 5173
             env:
               - name: NODE_ENV
                 value: development
@@ -120,22 +155,22 @@ deployments:
             readinessProbe:
               httpGet:
                 path: /
-                port: "5173"
+                port: 5173
               initialDelaySeconds: 10
               periodSeconds: 10
             livenessProbe:
               httpGet:
                 path: /
-                port: "5173"
+                port: 5173
               initialDelaySeconds: 15
               periodSeconds: 20
             resources:
               requests:
                 cpu: "100m"
-                memory: "256Mi"
-              limits:
-                cpu: "500m"
                 memory: "512Mi"
+              limits:
+                cpu: "1000m"
+                memory: "1Gi"
             securityContext:
               runAsNonRoot: true
               runAsUser: 1000
