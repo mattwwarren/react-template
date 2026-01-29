@@ -80,12 +80,13 @@ export function OrganizationPicker({
 
   // Auto-select if only one organization (review fix #1 - deps simplified)
   useEffect(() => {
-    if (orgs?.items && orgs.items.length === 1 && !autoSelectedRef.current) {
+    const firstOrg = orgs?.items?.[0]
+    if (firstOrg && orgs.items.length === 1 && !autoSelectedRef.current) {
       autoSelectedRef.current = true
-      onSelect(orgs.items[0].id)
+      onSelect(firstOrg.id)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgs, onSelect]) // onSelect omitted to prevent infinite loop
+  }, [orgs, onSelect]) // autoSelectedRef intentionally omitted (stable ref)
 
   if (isLoading) {
     return <CenteredLoading message="Loading organizations..." />
@@ -103,7 +104,7 @@ export function OrganizationPicker({
 
   // One organization - auto-selected (review fix #6: better UX)
   if (orgs.items.length === 1) {
-    return <CenteredLoading message={`Selecting ${orgs.items[0].name}...`} />
+    return <CenteredLoading message={`Selecting ${orgs.items[0]?.name}...`} />
   }
 
   // Multiple organizations - show picker dialog

@@ -67,7 +67,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
       }
     }
 
-    throw new ApiError(response.status, response.statusText, body.detail ?? body.message)
+    const detail = Array.isArray(body.detail) ? body.detail.join(', ') : body.detail
+    throw new ApiError(response.status, response.statusText, detail ?? body.message)
   }
 
   if (response.status === 204) {
@@ -82,9 +83,9 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
 
   // Inject organization header (validated)
   const selectedOrg = getSelectedOrganization()
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options?.headers,
+    ...(options?.headers as Record<string, string>),
   }
 
   // Validate before injection
@@ -118,7 +119,7 @@ export async function fetchApiFormData<T>(
 
   // Inject organization header (validated)
   const selectedOrg = getSelectedOrganization()
-  const headers: HeadersInit = {}
+  const headers: Record<string, string> = {}
 
   if (selectedOrg && isValidOrgId(selectedOrg)) {
     headers['X-Selected-Org'] = selectedOrg

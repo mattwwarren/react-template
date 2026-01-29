@@ -72,11 +72,8 @@ async function initCognito(): Promise<void> {
         },
       }
     }
-    Amplify.configure({
-      Auth: {
-        Cognito: cognitoConfig,
-      },
-    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Amplify.configure({ Auth: { Cognito: cognitoConfig } } as any)
 
     // Check current session
     const session = (await fetchAuthSession()) as AuthSession

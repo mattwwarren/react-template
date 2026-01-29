@@ -231,9 +231,10 @@ function Auth0ContextBridgeWithHook({
   const context = useAuth0Hook?.()
 
   useEffect(() => {
+    if (!context) return
     auth0Context = context
     updateStateFromAuth0Context()
-  }, [context, context.isAuthenticated, context.isLoading, context.user, context.error])
+  }, [context, context?.isAuthenticated, context?.isLoading, context?.user, context?.error])
 
   return <>{children}</>
 }
