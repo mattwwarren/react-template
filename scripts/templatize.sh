@@ -49,7 +49,7 @@ fi
 mkdir -p "${OUTPUT_DIR}"
 
 # Step 1: Copy project excluding dev artifacts
-echo -e "${GREEN}[1/5] Copying project (excluding dev artifacts)...${NC}"
+echo -e "${GREEN}[1/6] Copying project (excluding dev artifacts)...${NC}"
 
 EXCLUDE_PATTERNS=(
     ".git"
@@ -58,11 +58,15 @@ EXCLUDE_PATTERNS=(
     ".templatized"
     "playwright-report"
     "test-results"
+    "coverage"
     "package-lock.json"
     ".env.*.local"
     ".DS_Store"
     ".devspace"
     "*.log"
+    # Template infrastructure files (not for generated projects)
+    ".github/workflows/publish-template.yml"
+    "scripts/templatize.sh"
 )
 
 # Build rsync exclude arguments
@@ -87,7 +91,7 @@ SED_NAME='\x7B\x7B project_name \x7D\x7D'
 SED_SLUG_UNDERSCORE='\x7B\x7B project_slug_underscore \x7D\x7D'
 
 # Step 2: Replace references in config files that become .jinja templates
-echo -e "${GREEN}[2/5] Templating config files (.jinja)...${NC}"
+echo -e "${GREEN}[2/6] Templating config files (.jinja)...${NC}"
 
 # Files to convert to .jinja templates
 JINJA_TEMPLATE_FILES=(
@@ -116,7 +120,7 @@ for file in "${JINJA_TEMPLATE_FILES[@]}"; do
 done
 
 # Step 3: Replace references in TSX files with placeholders
-echo -e "${GREEN}[3/5] Adding placeholders to TSX files...${NC}"
+echo -e "${GREEN}[3/6] Adding placeholders to TSX files...${NC}"
 
 UI_FILES=(
     "src/components/layout/Header.tsx"
@@ -133,8 +137,8 @@ for file in "${UI_FILES[@]}"; do
     fi
 done
 
-# Step 4: Update markdown documentation
-echo -e "${GREEN}[4/5] Templating markdown files (.jinja)...${NC}"
+# Step 4: Update markdown documentation and other files
+echo -e "${GREEN}[4/6] Templating markdown and config files (.jinja)...${NC}"
 
 MD_COUNT=0
 for mdfile in "${OUTPUT_DIR}"/*.md; do
@@ -149,10 +153,49 @@ for mdfile in "${OUTPUT_DIR}"/*.md; do
         fi
     fi
 done
-echo "  Updated ${MD_COUNT} markdown files"
+echo "  Updated ${MD_COUNT} markdown files at root"
+
+# .claude/ directory - agent definitions, skills, shared configs
+if [[ -d "${OUTPUT_DIR}/.claude" ]]; then
+    CLAUDE_COUNT=0
+    while IFS= read -r -d '' file; do
+        if grep -qE "react-template|React Template" "$file" 2>/dev/null; then
+            sed -i "s/react-template/${SED_SLUG}/g" "$file"
+            sed -i "s/React Template/${SED_NAME}/g" "$file"
+            ((CLAUDE_COUNT++)) || true
+        fi
+    done < <(find "${OUTPUT_DIR}/.claude" -type f \( -name "*.md" -o -name "*.yaml" -o -name "*.yml" \) -print0 2>/dev/null)
+    echo "  Updated ${CLAUDE_COUNT} files in .claude/"
+fi
+
+# deployment/ directory - Kubernetes manifests
+if [[ -d "${OUTPUT_DIR}/deployment" ]]; then
+    DEPLOY_COUNT=0
+    while IFS= read -r -d '' file; do
+        if grep -qE "react-template|react_template" "$file" 2>/dev/null; then
+            sed -i "s/react-template/${SED_SLUG}/g" "$file"
+            sed -i "s/react_template/${SED_SLUG_UNDERSCORE}/g" "$file"
+            ((DEPLOY_COUNT++)) || true
+        fi
+    done < <(find "${OUTPUT_DIR}/deployment" -type f \( -name "*.yaml" -o -name "*.yml" \) -print0 2>/dev/null)
+    echo "  Updated ${DEPLOY_COUNT} files in deployment/"
+fi
+
+# tests/ directory - test files that reference project name
+if [[ -d "${OUTPUT_DIR}/tests" ]]; then
+    TEST_COUNT=0
+    while IFS= read -r -d '' file; do
+        if grep -qE "react-template|React Template" "$file" 2>/dev/null; then
+            sed -i "s/react-template/${SED_SLUG}/g" "$file"
+            sed -i "s/React Template/${PLACEHOLDER_NAME}/g" "$file"
+            ((TEST_COUNT++)) || true
+        fi
+    done < <(find "${OUTPUT_DIR}/tests" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" \) -print0 2>/dev/null)
+    echo "  Updated ${TEST_COUNT} test files"
+fi
 
 # Step 5: Verify output
-echo -e "${GREEN}[5/5] Verifying output...${NC}"
+echo -e "${GREEN}[5/6] Verifying output...${NC}"
 
 # Check .jinja files exist
 JINJA_COUNT=$(find "${OUTPUT_DIR}" -name "*.jinja" | wc -l)
@@ -174,6 +217,33 @@ if [[ -f "${OUTPUT_DIR}/_tasks.py" ]]; then
     echo "  Preserved: _tasks.py"
 else
     echo -e "${RED}  ERROR: _tasks.py not found${NC}"
+fi
+
+# Step 6: Verify no remaining hardcoded references
+echo -e "${GREEN}[6/6] Checking for remaining react-template references...${NC}"
+
+# Search for remaining references in non-.jinja files (excluding expected placeholders)
+REMAINING_REFS=$(find "${OUTPUT_DIR}" -type f \
+    \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \
+       -o -name "*.json" -o -name "*.yaml" -o -name "*.yml" \
+       -o -name "*.md" -o -name "*.html" -o -name "*.css" \) \
+    -not -name "*.jinja" \
+    -not -path "*/.git/*" \
+    -not -path "*/node_modules/*" \
+    -exec grep -l -E "react-template|react_template|React Template" {} \; 2>/dev/null || true)
+
+if [[ -n "${REMAINING_REFS}" ]]; then
+    echo -e "${RED}ERROR: Found remaining template references in:${NC}"
+    echo "${REMAINING_REFS}" | while read -r file; do
+        echo "  - ${file}"
+        # Show the lines with references
+        grep -n -E "react-template|react_template|React Template" "$file" 2>/dev/null | head -3 | sed 's/^/      /'
+    done
+    echo ""
+    echo -e "${YELLOW}These files may need to be added to templatize.sh${NC}"
+    exit 1
+else
+    echo "  No remaining hardcoded references found"
 fi
 
 # Summary
