@@ -77,6 +77,22 @@ pipelines:
         create_deployments --all
         start_dev --all
       fi
+  integration-tests:
+    run: |-
+      if is_dependency; then
+        bash scripts/devspace-banner.sh DEPENDENCY meta-workspace "Running: integration tests"
+        kubectl port-forward svc/devspace-app 5173:80 -n "${NAMESPACE}" &
+        PF_PID=$!
+        sleep 5
+        FRONTEND_URL=http://localhost:5173 npm run test:integration
+        kill $PF_PID 2>/dev/null || true
+      else
+        bash scripts/devspace-banner.sh STANDALONE react-template "Running: integration tests"
+        echo ""
+        echo "WARNING: Frontend integration tests require a running backend."
+        echo "Run from meta-workspace root: devspace run integration-tests"
+        exit 1
+      fi
 
 dev:
   ui:
