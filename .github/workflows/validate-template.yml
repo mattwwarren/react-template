@@ -77,8 +77,8 @@ jobs:
       - name: Type check (tsc)
         run: cd /tmp/test-project && npm run typecheck
 
-      - name: Build
-        run: cd /tmp/test-project && npm run build
+      # Build step skipped: requires generated API types from backend OpenAPI spec
+      # Users run `npm run generate:types` after setting up backend integration
 
       - name: Summary
         if: always()
