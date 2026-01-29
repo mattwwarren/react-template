@@ -66,6 +66,7 @@ EXCLUDE_PATTERNS=(
     "*.log"
     # Template infrastructure files (not for generated projects)
     ".github/workflows/publish-template.yml"
+    ".github/workflows/validate-template.yml"
     "scripts/templatize.sh"
 )
 
