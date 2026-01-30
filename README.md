@@ -39,6 +39,52 @@ npm run dev
 
 ---
 
+## Create New Project from Template
+
+Use [Copier](https://copier.readthedocs.io/) to generate a new project:
+
+### Quick Start
+
+```bash
+# Install Copier
+pipx install copier
+
+# Generate project with defaults
+copier copy gh:mattwwarren/react-template --vcs-ref copier my-project
+
+# Generate with custom options
+copier copy gh:mattwwarren/react-template --vcs-ref copier my-project \
+  --data project_name="My Dashboard" \
+  --data auth_enabled=true \
+  --data auth_provider=ory
+```
+
+### Available Variables
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `project_name` | string | required | Project name (e.g., "User Dashboard") |
+| `project_slug` | string | auto | Package name (lowercase with hyphens) |
+| `description` | string | "A React frontend application" | Brief project description |
+| `port` | int | 5173 | Development server port |
+| `api_url` | string | "http://localhost:8000" | Backend API URL |
+| `auth_enabled` | bool | false | Enable authentication |
+| `auth_provider` | choice | none | Auth provider: none, ory, auth0, keycloak, cognito |
+| `use_mocks` | bool | true | Include MSW mocks for standalone development |
+
+### Troubleshooting Template Generation
+
+**"Invalid template" error:**
+- Ensure you're using `--vcs-ref copier` to pull from the template branch
+
+**npm install fails:**
+- Ensure you have Node.js 20+ installed
+
+**API types not generated:**
+- Run `npm run generate:types` after starting your backend at the configured `api_url`
+
+---
+
 ## Deployment Options
 
 This template supports two deployment modes:
