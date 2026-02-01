@@ -1,0 +1,368 @@
+# Getting Started with React Template
+
+Create a new React frontend application from this template using Copier.
+
+## Prerequisites
+
+Install these tools before starting:
+
+```bash
+# Copier - template engine
+pip install copier
+# or
+uv tool install copier
+
+# Node.js 18+ and npm
+# Via nvm (recommended):
+nvm install 18
+nvm use 18
+
+# Optional: DevSpace for Kubernetes development
+curl -s https://raw.githubusercontent.com/loft-sh/devspace/main/install.sh | bash
+```
+
+## Quick Start
+
+### Create a New Project
+
+```bash
+# From GitHub (recommended)
+copier copy gh:mattwwarren/react-template --vcs-ref copier my-new-app
+
+# Or with explicit options
+copier copy gh:mattwwarren/react-template --vcs-ref copier my-new-app \
+  --data project_name="My Dashboard" \
+  --data port=5174 \
+  --data api_url="http://localhost:8001" \
+  --data auth_enabled=true \
+  --data auth_provider=ory
+```
+
+### Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `project_name` | string | (required) | Human-readable project name |
+| `project_slug` | string | (auto) | Package name (auto-generated with hyphens) |
+| `description` | string | "A React frontend application" | Brief project description |
+| `port` | int | 5173 | Development server port |
+| `api_url` | string | "http://localhost:8000" | Backend API URL |
+| `auth_enabled` | bool | false | Enable authentication UI |
+| `auth_provider` | string | none | Auth provider: none, ory, auth0, keycloak, cognito |
+| `use_mocks` | bool | true | Include MSW mocks for standalone development |
+
+### Post-Generation Steps
+
+After Copier generates your project:
+
+```bash
+cd my-new-app
+
+# 1. Install dependencies
+npm install
+
+# 2. Start development server
+npm run dev        # Connect to real API
+# or
+npm run dev:mock   # Use MSW mocks (no backend needed)
+
+# 3. Open http://localhost:5173
+```
+
+## Development Workflow
+
+### Option A: Standalone Development (MSW Mocks)
+
+Develop without a backend using Mock Service Worker:
+
+```bash
+# Start with mocks enabled
+npm run dev:mock
+
+# Mocks provide:
+# - Pre-seeded data (25 users, 5 orgs, 50 documents)
+# - Full CRUD operations
+# - Realistic API responses
+```
+
+### Option B: Connected Development (Real API)
+
+Connect to a running backend:
+
+```bash
+# Configure API URL in .env.development
+echo "VITE_API_URL=http://localhost:8000" > .env.development
+
+# Start frontend
+npm run dev
+
+# Backend must be running at configured URL
+```
+
+### Option C: DevSpace Development (Kubernetes)
+
+Run with the full stack in Kubernetes:
+
+```bash
+# From workspace root (with both frontend and backend)
+devspace dev
+
+# Or standalone
+cd my-new-app
+devspace dev
+```
+
+## Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start dev server (connects to real API) |
+| `npm run dev:mock` | Start dev server with MSW mocks |
+| `npm run build` | Create production build |
+| `npm run preview` | Preview production build locally |
+| `npm run test` | Run Vitest unit tests |
+| `npm run test:e2e` | Run Playwright E2E tests |
+| `npm run lint` | Run Biome linter |
+| `npm run lint:fix` | Auto-fix linting issues |
+| `npm run generate:types` | Generate TypeScript types from OpenAPI |
+
+## Type Generation from OpenAPI
+
+Keep frontend types in sync with your backend:
+
+```bash
+# If backend exports OpenAPI spec to ../specs/openapi.json
+npm run generate:types
+
+# Or specify a URL
+npx openapi-typescript http://localhost:8000/openapi.json -o src/api/generated/types.ts
+```
+
+Generated types are used throughout the app:
+
+```typescript
+import type { User, Organization } from '@/api/types';
+```
+
+## Project Structure
+
+```
+my-new-app/
+├── src/
+│   ├── api/                  # API client layer
+│   │   ├── generated/        # AUTO-GENERATED types (don't edit)
+│   │   ├── client.ts         # Fetch wrapper
+│   │   └── users.ts          # API functions by resource
+│   ├── auth/                 # Authentication
+│   │   ├── context.tsx       # Auth context provider
+│   │   └── providers/        # Auth provider implementations
+│   ├── components/
+│   │   ├── ui/               # shadcn/ui components
+│   │   ├── layout/           # Header, Sidebar, Layout
+│   │   └── shared/           # Reusable components
+│   ├── features/             # Feature modules
+│   │   ├── dashboard/
+│   │   ├── users/
+│   │   └── organizations/
+│   ├── hooks/                # Custom React hooks
+│   ├── lib/                  # Utilities
+│   ├── mocks/                # MSW mocks
+│   │   ├── factories/        # Faker.js data factories
+│   │   ├── handlers/         # MSW request handlers
+│   │   └── browser.ts        # MSW setup
+│   ├── App.tsx
+│   └── main.tsx
+├── tests/                    # E2E tests (Playwright)
+├── public/                   # Static assets
+├── index.html
+├── package.json
+├── vite.config.ts
+├── tsconfig.json
+└── biome.json                # Linting config
+```
+
+## Key Patterns
+
+### API Calls with TanStack Query
+
+```typescript
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { api } from '@/api/client';
+
+// Fetch data
+const { data, isLoading } = useQuery({
+  queryKey: ['users'],
+  queryFn: () => api.users.list(),
+});
+
+// Mutate data
+const createUser = useMutation({
+  mutationFn: (data: UserCreate) => api.users.create(data),
+  onSuccess: () => queryClient.invalidateQueries(['users']),
+});
+```
+
+### Form Validation with Zod
+
+```typescript
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const schema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).max(100),
+});
+
+function UserForm() {
+  const form = useForm({
+    resolver: zodResolver(schema),
+  });
+  // ...
+}
+```
+
+### Protected Routes
+
+```typescript
+import { useAuth } from '@/auth/context';
+import { Navigate, Outlet } from 'react-router-dom';
+
+function ProtectedRoute() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) return <LoadingSpinner />;
+  if (!isAuthenticated) return <Navigate to="/login" />;
+
+  return <Outlet />;
+}
+```
+
+## Testing
+
+### Unit Tests (Vitest + Testing Library)
+
+```bash
+# Run all tests
+npm run test
+
+# Watch mode
+npm run test -- --watch
+
+# Coverage
+npm run test -- --coverage
+```
+
+### E2E Tests (Playwright)
+
+```bash
+# Run E2E tests
+npm run test:e2e
+
+# UI mode (interactive)
+npx playwright test --ui
+
+# Specific test file
+npx playwright test tests/users.spec.ts
+```
+
+## Environment Variables
+
+```bash
+# .env.development
+VITE_API_URL=http://localhost:8000
+VITE_USE_MOCKS=false
+
+# .env.development (for mock mode - set via npm run dev:mock)
+VITE_USE_MOCKS=true
+
+# .env.production
+VITE_API_URL=https://api.example.com
+
+# Auth variables (when auth_enabled=true)
+VITE_ORY_URL=https://your-ory-instance.com
+VITE_AUTH0_DOMAIN=your-tenant.auth0.com
+VITE_AUTH0_CLIENT_ID=your-client-id
+```
+
+## Updating from Template
+
+When the template receives improvements:
+
+```bash
+cd my-new-app
+
+# Preview changes
+copier update --pretend
+
+# Apply updates
+copier update
+
+# Review and resolve conflicts
+git diff
+git add -A && git commit -m "chore: update from template"
+```
+
+## Adding shadcn/ui Components
+
+This template uses shadcn/ui for UI components:
+
+```bash
+# Add a new component
+npx shadcn@latest add button
+npx shadcn@latest add dialog
+npx shadcn@latest add form
+
+# Components are added to src/components/ui/
+```
+
+## Troubleshooting
+
+### "CORS error when connecting to API"
+
+Configure your backend to allow the frontend origin:
+
+```python
+# FastAPI backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+### "Types don't match backend"
+
+Regenerate types from the OpenAPI spec:
+
+```bash
+npm run generate:types
+```
+
+### "MSW not intercepting requests"
+
+Ensure MSW is started before your app renders. Check `src/main.tsx`:
+
+```typescript
+async function enableMocking() {
+  if (import.meta.env.VITE_USE_MOCKS === 'true') {
+    const { worker } = await import('./mocks/browser');
+    return worker.start();
+  }
+}
+
+enableMocking().then(() => {
+  ReactDOM.createRoot(...).render(<App />);
+});
+```
+
+## Next Steps
+
+- Review [QUICKSTART.md](QUICKSTART.md) for detailed setup
+- Check [CONFIGURATION-GUIDE.md](CONFIGURATION-GUIDE.md) for advanced configuration
+- See [TESTING_GUIDE.md](TESTING_GUIDE.md) for testing best practices
+
+## License
+
+This is free and unencumbered software released into the public domain.
