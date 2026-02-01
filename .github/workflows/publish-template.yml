@@ -66,21 +66,21 @@ jobs:
             exit 1
           fi
 
-          # Check for Jinja2 syntax in key files
-          if ! grep -q "{{ project_slug }}" ".templatized/package.json"; then
-            echo "ERROR: package.json missing template variables"
+          # Check for Jinja2 syntax in key files (react-template uses .jinja suffix)
+          if ! grep -q "{{ project_slug }}" ".templatized/package.json.jinja"; then
+            echo "ERROR: package.json.jinja missing template variables"
             exit 1
           fi
 
           # Verify devspace.yaml was templatized (uses underscores for K8s)
-          if ! grep -q "{{ project_slug_underscore }}" ".templatized/devspace.yaml"; then
-            echo "ERROR: devspace.yaml missing template variables"
+          if ! grep -q "{{ project_slug_underscore }}" ".templatized/devspace.yaml.jinja"; then
+            echo "ERROR: devspace.yaml.jinja missing template variables"
             exit 1
           fi
 
           # Verify UI components have project_name
-          if ! grep -q "{{ project_name }}" ".templatized/src/components/layout/Header.tsx"; then
-            echo "ERROR: Header.tsx missing project_name variable"
+          if ! grep -q "{{ project_name }}" ".templatized/src/components/layout/Header.tsx.jinja"; then
+            echo "ERROR: Header.tsx.jinja missing project_name variable"
             exit 1
           fi
 
