@@ -72,15 +72,15 @@ jobs:
             exit 1
           fi
 
-          # Verify devspace.yaml was templatized (uses underscores for K8s)
-          if ! grep -q "{{ project_slug_underscore }}" ".templatized/devspace.yaml.jinja"; then
+          # Verify devspace.yaml was templatized
+          if ! grep -q "{{ project_slug }}" ".templatized/devspace.yaml.jinja"; then
             echo "ERROR: devspace.yaml.jinja missing template variables"
             exit 1
           fi
 
-          # Verify UI components have project_name
-          if ! grep -q "{{ project_name }}" ".templatized/src/components/layout/Header.tsx.jinja"; then
-            echo "ERROR: Header.tsx.jinja missing project_name variable"
+          # Verify index.html has project_slug
+          if ! grep -q "{{ project_slug }}" ".templatized/index.html.jinja"; then
+            echo "ERROR: index.html.jinja missing project_slug variable"
             exit 1
           fi
 
