@@ -1,0 +1,209 @@
+version: v2beta1
+name: "{{ project_slug }}"
+
+vars:
+  CLUSTER_NAME:
+    default: "{{ project_slug }}"
+    source: env
+  NAMESPACE:
+    default: warren-enterprises-ltd
+    source: env
+  IMAGE_NAME:
+    default: "{{ project_slug }}"
+    source: env
+  IMAGE_TAG:
+    default: dev
+    source: env
+  APP_NAME:
+    default: "{{ project_slug }}"
+    source: env
+  ENVIRONMENT:
+    default: dev
+    source: env
+  # API URL for backend service (in-cluster or external)
+  API_URL:
+    default: "http://fastapi-template.warren-enterprises-ltd.svc.cluster.local"
+    source: env
+
+localRegistry:
+  enabled: false
+
+images:
+  app:
+    image: ${IMAGE_NAME}
+    tags:
+      - ${IMAGE_TAG}
+    dockerfile: ./docker/Dockerfile
+    target: dev
+    skipPush: true
+
+pipelines:
+  deploy:
+    run: |-
+      if is_dependency; then
+        bash scripts/devspace-banner.sh DEPENDENCY meta-workspace "Deploying: frontend"
+        create_deployments frontend
+      else
+        bash scripts/devspace-banner.sh STANDALONE {{ project_slug }} "Deploying: frontend"
+        bash scripts/k3d-up.sh
+        export KUBECONFIG="$(k3d kubeconfig write ${CLUSTER_NAME})"
+        kubectl config use-context "k3d-${CLUSTER_NAME}"
+        for _ in $(seq 1 30); do
+          if kubectl get namespaces >/dev/null 2>&1; then
+            break
+          fi
+          sleep 1
+        done
+        kubectl create namespace "${NAMESPACE}" 2>/dev/null || true
+        create_deployments --all
+      fi
+  dev:
+    run: |-
+      if is_dependency; then
+        bash scripts/devspace-banner.sh DEPENDENCY meta-workspace "Dev service: ui"
+        start_dev ui
+      else
+        bash scripts/devspace-banner.sh STANDALONE {{ project_slug }} "Dev services: all"
+        bash scripts/k3d-up.sh
+        export KUBECONFIG="$(k3d kubeconfig write ${CLUSTER_NAME})"
+        kubectl config use-context "k3d-${CLUSTER_NAME}"
+        for _ in $(seq 1 30); do
+          if kubectl get namespaces >/dev/null 2>&1; then
+            break
+          fi
+          sleep 1
+        done
+        kubectl create namespace "${NAMESPACE}" 2>/dev/null || true
+        create_deployments --all
+        start_dev --all
+      fi
+  integration-tests:
+    run: |-
+      if is_dependency; then
+        bash scripts/devspace-banner.sh DEPENDENCY meta-workspace "Running: integration tests"
+        kubectl port-forward svc/devspace-app 5173:80 -n "${NAMESPACE}" &
+        PF_PID=$!
+        sleep 5
+        FRONTEND_URL=http://localhost:5173 npm run test:integration
+        kill $PF_PID 2>/dev/null || true
+      else
+        bash scripts/devspace-banner.sh STANDALONE {{ project_slug }} "Running: integration tests"
+        echo ""
+        echo "WARNING: Frontend integration tests require a running backend."
+        echo "Run from meta-workspace root: devspace run integration-tests"
+        exit 1
+      fi
+
+dev:
+  ui:
+    namespace: ${NAMESPACE}
+    imageSelector: ${runtime.images.app.image}:${runtime.images.app.tag}
+    ports:
+      - port: "5173"
+    sync:
+      - path: ./src:/app/src
+      - path: ./public:/app/public
+      - path: ./index.html:/app/index.html
+        file: true
+
+hooks:
+  - events: ["after:build"]
+    command: |-
+      if k3d cluster list | grep -q "^${CLUSTER_NAME} "; then
+        k3d image import ${runtime.images.app.image}:${runtime.images.app.tag} -c ${CLUSTER_NAME}
+      else
+        echo "Skipping image import - cluster ${CLUSTER_NAME} not found (running as dependency)"
+      fi
+
+commands:
+  init:
+    description: "Initialize standalone cluster and context"
+    command: bash
+    args:
+      - -c
+      - |
+        bash scripts/k3d-up.sh
+        export KUBECONFIG="$(k3d kubeconfig write ${CLUSTER_NAME})"
+        kubectl config use-context "k3d-${CLUSTER_NAME}"
+        kubectl create namespace "${NAMESPACE}" 2>/dev/null || true
+        echo "Cluster ${CLUSTER_NAME} ready. Run 'devspace dev' to start."
+  build-prod:
+    description: "Build production Docker image"
+    command: bash
+    args:
+      - -c
+      - |
+        docker build -f docker/Dockerfile --target prod -t ${IMAGE_NAME}:prod .
+  k3d-down:
+    description: "Delete the local k3d cluster and clear cache"
+    command: bash
+    args:
+      - -c
+      - |
+        bash scripts/k3d-down.sh
+        rm -f .devspace/cache.yaml
+        echo "Cache cleared"
+
+# Deployment definitions
+
+deployments:
+  frontend:
+    namespace: ${NAMESPACE}
+    helm:
+      chart:
+        name: component-chart
+        version: "0.9.1"
+        repo: https://charts.devspace.sh
+      values:
+        containers:
+          - name: ui
+            image: ${runtime.images.app.image}:${runtime.images.app.tag}
+            imagePullPolicy: IfNotPresent
+            ports:
+              - containerPort: 5173
+            env:
+              - name: NODE_ENV
+                value: development
+              - name: VITE_API_URL
+                value: ${API_URL}
+              - name: VITE_USE_MOCKS
+                value: "false"
+            readinessProbe:
+              httpGet:
+                path: /
+                port: 5173
+              initialDelaySeconds: 10
+              periodSeconds: 10
+            livenessProbe:
+              httpGet:
+                path: /
+                port: 5173
+              initialDelaySeconds: 15
+              periodSeconds: 20
+            resources:
+              requests:
+                cpu: "100m"
+                memory: "512Mi"
+              limits:
+                cpu: "1000m"
+                memory: "1Gi"
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false  # Dev server needs to write temp files
+              capabilities:
+                drop:
+                  - ALL
+        # Service configuration for development
+        # Note: For production (target: prod), containerPort and targetPort would be 8080 (nginx)
+        service:
+          ports:
+            - port: 80
+              targetPort: 5173
+  pdb:
+    namespace: ${NAMESPACE}
+    kubectl:
+      manifests:
+        - deployment/pdb.yaml

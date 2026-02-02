@@ -1,0 +1,227 @@
+# {{ project_name }}
+
+React UI template for consuming FastAPI backends.
+
+## Overview
+
+This template provides a production-ready React frontend that integrates with the [fastapi-template](../fastapi-template) backend. It demonstrates:
+
+- Type-safe API consumption (generated from OpenAPI)
+- Authentication UI (Ory, Auth0, Keycloak, Cognito)
+- Mock-first development (MSW + Faker.js)
+- Modern React patterns (TanStack Query, React Router 6)
+- Full DevOps (Docker, DevSpace)
+
+## Quick Start
+
+```bash
+# Development with mocks (no backend needed)
+npm install
+npm run dev:mock
+
+# Development with real API
+npm run generate:types  # Requires backend at localhost:8000
+npm run dev
+```
+
+## Technology Stack
+
+| Layer | Technology |
+|-------|------------|
+| Build | Vite 5.x |
+| Framework | React 18 + TypeScript |
+| Styling | Tailwind CSS + shadcn/ui |
+| State | TanStack Query |
+| Forms | React Hook Form + Zod |
+| Testing | Vitest + Playwright |
+| Container | Docker (multi-stage) |
+| Orchestration | DevSpace |
+
+---
+
+## Create New Project from Template
+
+Use [Copier](https://copier.readthedocs.io/) to generate a new project:
+
+### Quick Start
+
+```bash
+# Install Copier
+pipx install copier
+
+# Generate project with defaults
+copier copy gh:mattwwarren/{{ project_slug }} --vcs-ref copier my-project
+
+# Generate with custom options
+copier copy gh:mattwwarren/{{ project_slug }} --vcs-ref copier my-project \
+  --data project_name="My Dashboard" \
+  --data auth_enabled=true \
+  --data auth_provider=ory
+```
+
+### Available Variables
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `project_name` | string | required | Project name (e.g., "User Dashboard") |
+| `project_slug` | string | auto | Package name (lowercase with hyphens) |
+| `description` | string | "A React frontend application" | Brief project description |
+| `port` | int | 5173 | Development server port |
+| `api_url` | string | "http://localhost:8000" | Backend API URL |
+| `auth_enabled` | bool | false | Enable authentication |
+| `auth_provider` | choice | none | Auth provider: none, ory, auth0, keycloak, cognito |
+| `use_mocks` | bool | true | Include MSW mocks for standalone development |
+
+### Troubleshooting Template Generation
+
+**"Invalid template" error:**
+- Ensure you're using `--vcs-ref copier` to pull from the template branch
+
+**npm install fails:**
+- Ensure you have Node.js 20+ installed
+
+**API types not generated:**
+- Run `npm run generate:types` after starting your backend at the configured `api_url`
+
+---
+
+## Deployment Options
+
+This template supports two deployment modes:
+
+### Option A: Independent Deployment (Default)
+
+Run the frontend standalone with its own k3d cluster. Best for:
+- Frontend-only development with MSW mocks
+- CI/CD pipelines testing frontend in isolation
+- Teams working primarily on UI
+
+```bash
+cd {{ project_slug }}
+
+# Start local k3d cluster with frontend only
+devspace dev
+
+# Access at http://localhost:5173
+```
+
+**Configuration:**
+- Uses own cluster: `react_template`
+- API URL defaults to mock service or external URL
+- Set `VITE_USE_MOCKS=true` for mock data
+
+### Option B: Full-Stack Deployment
+
+Run alongside the backend in a shared cluster. Best for:
+- Integration testing
+- E2E development
+- Staging/production environments
+
+**Method 1: Shared Cluster (Manual)**
+```bash
+# Terminal 1: Start backend
+cd fastapi-template
+CLUSTER_NAME=fullstack devspace dev
+
+# Terminal 2: Start frontend (same cluster)
+cd {{ project_slug }}
+CLUSTER_NAME=fullstack API_URL=http://fastapi-template.warren-enterprises-ltd.svc.cluster.local devspace dev
+```
+
+**Method 2: Workspace DevSpace (Recommended)**
+```bash
+# From workspace root
+cd meta-work
+devspace dev
+
+# Starts both services in coordinated cluster
+# Frontend: http://localhost:5173
+# Backend: http://localhost:8000
+```
+
+See [Workspace DevSpace Configuration](#workspace-devspace-configuration) below.
+
+---
+
+## DevSpace Commands
+
+| Command | Description |
+|---------|-------------|
+| `devspace dev` | Start development with hot reload |
+| `devspace run build-prod` | Build production Docker image |
+| `devspace run k3d-down` | Delete local k3d cluster |
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CLUSTER_NAME` | `react_template` | k3d cluster name |
+| `NAMESPACE` | `warren-enterprises-ltd` | Kubernetes namespace |
+| `API_URL` | (in-cluster service) | Backend API URL |
+| `VITE_USE_MOCKS` | `false` | Enable MSW mock handlers |
+
+---
+
+## Docker Builds
+
+### Development Build
+```bash
+docker build -f docker/Dockerfile --target dev -t {{ project_slug }}:dev .
+docker run -p 5173:5173 -v $(pwd)/src:/app/src {{ project_slug }}:dev
+```
+
+### Production Build
+```bash
+docker build -f docker/Dockerfile --target prod -t {{ project_slug }}:prod .
+docker run -p 8080:80 -e API_URL=http://api.example.com {{ project_slug }}:prod
+```
+
+The production build:
+- Multi-stage: builds static assets, serves via nginx
+- Runtime API_URL configuration via nginx environment substitution
+- Health check endpoint at `/health`
+- Gzipped assets with proper cache headers
+
+---
+
+## Workspace DevSpace Configuration
+
+For full-stack development, use the workspace-level `devspace.yaml` at the repository root:
+
+```yaml
+# meta-work/devspace.yaml
+version: v2beta1
+name: "meta_workspace"
+
+# Orchestrates both frontend and backend
+# See workspace root for full configuration
+```
+
+**Features:**
+- Single `devspace dev` command starts both services
+- Shared k3d cluster with proper networking
+- Coordinated port mapping (5173 for UI, 8000 for API)
+- Frontend auto-configured to reach backend via in-cluster DNS
+
+---
+
+## Testing
+
+```bash
+# Unit tests with Vitest
+npm test
+
+# E2E tests with Playwright
+npm run test:e2e
+
+# Coverage report
+npm run test:coverage
+```
+
+## Documentation
+
+- [CLAUDE.md](./CLAUDE.md) - Development patterns and conventions
+
+## License
+
+MIT

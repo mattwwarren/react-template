@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@anthropic-ai/mcp-server-playwright"],
+      "description": "AI-powered E2E test generation and browser automation"
+    },
+    "figma": {
+      "command": "npx",
+      "args": ["@anthropic-ai/mcp-server-figma"],
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "${FIGMA_TOKEN}"
+      },
+      "description": "Design-to-code bridge for Figma designs"
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["@anthropic-ai/mcp-server-memory"],
+      "description": "Persistent project knowledge across sessions"
+    }
+  }
+}

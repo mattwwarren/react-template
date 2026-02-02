@@ -1,0 +1,32 @@
+import { NavLink } from 'react-router-dom'
+import { cn } from '@/lib/utils'
+import { navigation } from './navigation'
+
+export function Sidebar(): React.ReactElement {
+  return (
+    <aside className="hidden w-64 border-r bg-card md:block">
+      <div className="flex h-16 items-center border-b px-6">
+        <span className="text-xl font-bold">__PROJECT_NAME__</span>
+      </div>
+      <nav className="space-y-1 p-4">
+        {navigation.map((item) => (
+          <NavLink
+            key={item.name}
+            to={item.to}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )
+            }
+          >
+            <item.icon className="h-5 w-5" />
+            {item.name}
+          </NavLink>
+        ))}
+      </nav>
+    </aside>
+  )
+}

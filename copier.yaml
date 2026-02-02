@@ -1,0 +1,118 @@
+_min_copier_version: "9.0.0"
+# Use .jinja suffix for templates - source files won't be processed
+_templates_suffix: ".jinja"
+_envops:
+  keep_trailing_newline: true
+_exclude:
+  - "scripts/templatize.sh"
+  - ".git"
+  - ".git/**"
+  - ".templatized"
+  - ".templatized/**"
+  - "node_modules"
+  - "node_modules/**"
+  - "dist"
+  - "dist/**"
+  - "playwright-report"
+  - "playwright-report/**"
+  - "test-results"
+  - "test-results/**"
+  - "package-lock.json"
+  # GitHub Actions uses ${{ }} which conflicts with Jinja2
+  - ".github/workflows/publish-template.yml"
+
+project_name:
+  type: str
+  help: "Project name (e.g., 'User Dashboard')"
+  validator: "{% if not project_name %}Required{% endif %}"
+
+project_slug:
+  type: str
+  help: "Package name (auto-generated, lowercase with hyphens)"
+  default: "{{ project_name | lower | replace(' ', '-') | replace('_', '-') }}"
+
+# Derived variable for DevSpace/Kubernetes (underscores instead of hyphens)
+project_slug_underscore:
+  type: str
+  help: "Package name with underscores (for DevSpace/K8s)"
+  default: "{{ project_slug | replace('-', '_') }}"
+  when: false
+
+description:
+  type: str
+  help: "Brief project description"
+  default: "A React frontend application"
+
+port:
+  type: int
+  help: "Development server port"
+  default: 5173
+  validator: "{% if port < 1024 or port > 65535 %}Port must be 1024-65535{% endif %}"
+
+api_url:
+  type: str
+  help: "Backend API URL for development"
+  default: "http://localhost:8000"
+
+auth_enabled:
+  type: bool
+  help: "Enable authentication? (Adds auth provider and protected routes)"
+  default: false
+
+auth_provider:
+  type: str
+  help: |
+    Authentication provider:
+      - none: No authentication (public app)
+      - ory: Ory (open source, self-hosted)
+      - auth0: Auth0 (commercial SaaS)
+      - keycloak: Keycloak (open source)
+      - cognito: AWS Cognito (AWS managed)
+  default: none
+  choices:
+    - none
+    - ory
+    - auth0
+    - keycloak
+    - cognito
+  when: "{{ auth_enabled }}"
+
+use_mocks:
+  type: bool
+  help: "Include MSW mocks for standalone development?"
+  default: true
+
+_tasks:
+  - "python3 _tasks.py"
+
+_message_after: |
+
+  Project {{ project_name }} generated successfully!
+
+  Quick Start:
+    1. Install dependencies:
+       cd {{ _copier_conf.dst_path }}
+       npm install
+    2. Start development server:
+       npm run dev{% if use_mocks %}:mock{% endif %}
+
+    3. Open http://localhost:{{ port }}
+
+  Configuration Summary:
+    - Authentication: {{ 'Enabled (' + auth_provider + ')' if auth_enabled else 'Disabled' }}
+    - MSW Mocks: {{ 'Enabled' if use_mocks else 'Disabled' }}
+    - API URL: {{ api_url }}
+
+  Available Scripts:
+    - npm run dev          # Connect to real API
+    - npm run dev:mock     # Use MSW mocks
+    - npm run build        # Production build
+    - npm run test         # Run tests
+    - npm run lint         # ESLint check
+
+  Next Steps:
+    - Review QUICKSTART.md for detailed setup
+    - Configure .env.development with your API URL
+    - Run npm run generate:types to sync with backend API
+
+  Happy coding!

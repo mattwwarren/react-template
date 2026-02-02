@@ -1,0 +1,198 @@
+# {{ project_name }} Deployment Guide
+
+Documentation for deploying projects from the {{ project_slug }} using the runnable-first workflow.
+
+## Overview: Runnable-First Template
+
+This template uses a **runnable-first** architecture:
+
+- **Main branch** contains runnable React code (`src/`)
+- **`copier` branch** contains the Copier template (auto-generated on release)
+- Template variables are generated at release time via GitHub Actions
+
+This approach provides several benefits:
+- Developers can work directly on main branch with full IDE support
+- No need to generate test instances during development
+- CI/CD runs against real TypeScript code
+- Template generation is automated and consistent
+
+---
+
+## Deployment Workflow
+
+### For External Users (Recommended)
+
+Generate a new project directly from the latest release:
+
+```bash
+# Create a new frontend from the template
+copier copy gh:mattwwarren/{{ project_slug }} --vcs-ref copier my-frontend
+
+# Answer the prompts for project configuration
+# Project name, auth provider, API URL, etc.
+
+# Navigate to your new project
+cd my-frontend
+
+# Install dependencies
+npm install
+
+# Run initial verification
+npm run typecheck
+npm run lint
+npm test
+```
+
+**Note**: The `--vcs-ref copier` flag ensures you're using the templatized version, not the runnable main branch.
+
+### For Local Testing (Contributors)
+
+If you're contributing to the template and want to test generation locally:
+
+```bash
+# Step 1: Generate the template from runnable code
+cd /path/to/{{ project_slug }}
+./scripts/templatize.sh
+
+# Step 2: Generate a test project from the local template
+copier copy .templatized/ /path/to/test-frontend --trust
+
+# Step 3: Verify the generated project
+cd /path/to/test-frontend
+npm install
+npm run typecheck
+npm run lint
+npm test
+```
+
+---
+
+## Template Variables
+
+When generating a new project, you'll be prompted for:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `project_name` | Display name for the project | "My Frontend" |
+| `project_slug` | Package name (hyphens) | "my-frontend" |
+| `port` | Development server port | 5173 |
+| `api_url` | Backend API URL | "http://localhost:8000" |
+| `auth_enabled` | Enable authentication UI | true |
+| `auth_provider` | Auth provider type | "ory" |
+
+---
+
+## DevSpace Deployment
+
+### Option A: Standalone Development
+
+Deploy just the frontend to a k3d cluster:
+
+```bash
+cd my-frontend
+devspace dev
+```
+
+This uses the local `devspace.yaml` which deploys:
+- Frontend application (hot reload enabled)
+- Nginx ingress for local access
+
+Frontend available at: `http://localhost:5173`
+
+### Option B: Full-Stack Development
+
+Deploy frontend + backend together:
+
+```bash
+# Clone both templates into workspace
+cd workspace/
+git clone ... my-frontend
+git clone ... my-backend
+
+# Use workspace-level devspace.yaml
+devspace dev
+```
+
+This deploys:
+- Frontend at `http://localhost:5173`
+- Backend at `http://localhost:8000`
+- PostgreSQL database
+- Shared networking
+
+---
+
+## Docker Builds
+
+### Development Image
+
+Build with hot reload support:
+
+```bash
+npm run docker:dev
+# or
+docker build -t my-frontend:dev --target development .
+```
+
+Uses Vite dev server with hot module replacement.
+
+### Production Image
+
+Build static nginx image:
+
+```bash
+npm run docker:prod
+# or
+docker build -t my-frontend:prod --target production .
+```
+
+Produces a minimal nginx image serving static files. Environment variables must be set at build time.
+
+---
+
+## Updating Existing Instances
+
+To update a generated project with template changes:
+
+```bash
+cd my-frontend
+copier update --trust
+```
+
+Copier will:
+1. Show what files have changed
+2. Apply template updates
+3. Preserve your local modifications (if possible)
+
+**Note**: Review all changes before committing. Template updates may conflict with local customizations.
+
+---
+
+## Verification Steps
+
+After generating or updating, verify the project works:
+
+```bash
+# 1. Type checking
+npm run typecheck
+
+# 2. Linting
+npm run lint
+
+# 3. Unit tests
+npm test
+
+# 4. Build production
+npm run build
+
+# 5. E2E tests (optional)
+npm run test:e2e
+```
+
+---
+
+## Related Files
+
+- [CLAUDE.md](CLAUDE.md) - Development patterns
+- [AGENTS.md](AGENTS.md) - Quick reference
+- [CONFIGURATION-GUIDE.md](CONFIGURATION-GUIDE.md) - Environment setup
+- [TESTING_GUIDE.md](TESTING_GUIDE.md) - Testing patterns
