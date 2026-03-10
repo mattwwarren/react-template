@@ -6,6 +6,7 @@ import { Layout } from '@/components/layout'
 import { ErrorBoundary, LoadingSpinner, RouteErrorBoundary } from '@/components/shared'
 import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/features/auth'
+import { SocketProvider } from '@/realtime'
 
 // Direct file imports for proper tree shaking (avoid barrel imports with lazy())
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'))
@@ -54,36 +55,38 @@ function App(): React.ReactElement {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <BrowserRouter>
-            <Suspense
-              fallback={
-                <div className="flex h-screen items-center justify-center">
-                  <LoadingSpinner />
-                </div>
-              }
-            >
-              <Routes>
-                {/* Public routes - no layout, no auth required */}
-                <Route errorElement={<RouteErrorBoundary />}>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/auth/callback" element={<AuthCallback />} />
-                </Route>
-
-                {/* Protected routes - require authentication */}
-                <Route element={<ProtectedRoute />} errorElement={<RouteErrorBoundary />}>
-                  <Route element={<Layout />}>
-                    <Route path="/" element={<DashboardPage />} />
-                    <Route path="/users" element={<UsersPage />} />
-                    <Route path="/users/:id" element={<UserDetailPage />} />
-                    <Route path="/organizations" element={<OrganizationsPage />} />
-                    <Route path="/organizations/:id" element={<OrganizationDetailPage />} />
-                    <Route path="/documents" element={<DocumentsPage />} />
-                    <Route path="*" element={<NotFoundPage />} />
+          <SocketProvider>
+            <BrowserRouter>
+              <Suspense
+                fallback={
+                  <div className="flex h-screen items-center justify-center">
+                    <LoadingSpinner />
+                  </div>
+                }
+              >
+                <Routes>
+                  {/* Public routes - no layout, no auth required */}
+                  <Route errorElement={<RouteErrorBoundary />}>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
                   </Route>
-                </Route>
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
+
+                  {/* Protected routes - require authentication */}
+                  <Route element={<ProtectedRoute />} errorElement={<RouteErrorBoundary />}>
+                    <Route element={<Layout />}>
+                      <Route path="/" element={<DashboardPage />} />
+                      <Route path="/users" element={<UsersPage />} />
+                      <Route path="/users/:id" element={<UserDetailPage />} />
+                      <Route path="/organizations" element={<OrganizationsPage />} />
+                      <Route path="/organizations/:id" element={<OrganizationDetailPage />} />
+                      <Route path="/documents" element={<DocumentsPage />} />
+                      <Route path="*" element={<NotFoundPage />} />
+                    </Route>
+                  </Route>
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </SocketProvider>
           <Toaster />
         </AuthProvider>
       </QueryClientProvider>
