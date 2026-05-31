@@ -15,8 +15,8 @@ FROM base AS dev
 # Use existing node user (UID 1000, GID 1000)
 RUN npm ci
 COPY . .
-# Set ownership for node user
-RUN chown -R node:node /app
+# Set ownership for node user and DevSpace restart helper
+RUN chown -R node:node /app && mkdir -p /.devspace && chown node:node /.devspace
 USER node
 EXPOSE 5173
 ENV NODE_ENV=development

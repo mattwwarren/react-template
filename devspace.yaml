@@ -11,9 +11,6 @@ vars:
   IMAGE_NAME:
     default: "react-template"
     source: env
-  IMAGE_TAG:
-    default: dev
-    source: env
   APP_NAME:
     default: "react-template"
     source: env
@@ -31,8 +28,6 @@ localRegistry:
 images:
   app:
     image: ${IMAGE_NAME}
-    tags:
-      - ${IMAGE_TAG}
     dockerfile: ./docker/Dockerfile
     target: dev
     skipPush: true
@@ -98,6 +93,7 @@ dev:
   ui:
     namespace: ${NAMESPACE}
     imageSelector: ${runtime.images.app.image}:${runtime.images.app.tag}
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
       - port: "5173"
     sync:
@@ -105,6 +101,14 @@ dev:
       - path: ./public:/app/public
       - path: ./index.html:/app/index.html
         file: true
+      - path: ./.env.development:/app/.env.development
+        file: true
+        onUpload:
+          restartContainer: true
+      - path: ./vite.config.ts:/app/vite.config.ts
+        file: true
+        onUpload:
+          restartContainer: true
 
 hooks:
   - events: ["after:build"]
