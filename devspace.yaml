@@ -80,11 +80,20 @@ dev:
     imageSelector: ${runtime.images.app.image}:${runtime.images.app.tag}
     ports:
       - port: "5173"
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     sync:
       - path: ./src:/app/src
       - path: ./public:/app/public
       - path: ./index.html:/app/index.html
         file: true
+      - path: ./.env.development:/app/.env.development
+        file: true
+        onUpload:
+          restartContainer: true
+      - path: ./vite.config.ts:/app/vite.config.ts
+        file: true
+        onUpload:
+          restartContainer: true
 
 hooks:
   - events: ["after:build"]
