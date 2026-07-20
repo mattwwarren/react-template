@@ -12,12 +12,12 @@ React UI template for consuming FastAPI backends. Reference implementation demon
 
 | Layer | Technology |
 |-------|------------|
-| Build | Vite 5.x |
-| Framework | React 18 |
+| Build | Vite 7 |
+| Framework | React 19 |
 | Language | TypeScript (strict mode) |
-| Styling | Tailwind CSS 3.x + shadcn/ui |
+| Styling | Tailwind CSS 4 + shadcn/ui |
 | State | TanStack Query (server state) |
-| Routing | React Router 6 |
+| Routing | React Router 7 (declarative `<Routes>`) |
 | Forms | React Hook Form + Zod |
 | Types | Auto-generated from OpenAPI via `openapi-typescript` |
 | Mocks | MSW 2.x + @faker-js/faker (seeded) |
