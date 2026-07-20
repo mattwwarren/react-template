@@ -21,12 +21,15 @@ repo to a Copier template at release time (name/slug substitutions plus
 to the `copier` branch.
 
 > **Known gap:** of the Copier variables, only the identity ones
-> (`project_name`/`project_slug`) meaningfully shape the generated project.
+> (`project_name`/`project_slug`) shape the generated **code**.
 > `auth_enabled`, `auth_provider`, `use_mocks`, `port`, and `api_url` are
-> prompted for but not consumed by any generation logic — every generated
-> project ships all auth providers and the full MSW mock layer, and the
-> port/API URL answers are discarded. The real switches are **runtime env
-> vars**: `VITE_AUTH_PROVIDER`, `VITE_USE_MOCKS`, `VITE_API_URL`.
+> consumed only by documentation templating (they drive Jinja branches in
+> the generated `QUICKSTART.md`) — no application config or source file
+> branches on them, so every generated project ships all auth providers and
+> the full MSW mock layer regardless of the answers, and `vite.config.ts` /
+> `.env.development` keep their hardcoded port/URL. The real switches are
+> **runtime env vars**: `VITE_AUTH_PROVIDER`, `VITE_USE_MOCKS`,
+> `VITE_API_URL`.
 
 ## Layering
 
@@ -126,8 +129,10 @@ Cookie/session-based, provider-pluggable:
   SDK isn't installed. Mock loads synchronously to avoid a loading flash;
   real providers load async.
 - The Ory provider is redirect-based (Kratos self-service flows) and
-  requires `VITE_ORY_SDK_URL`. Non-mock providers share a
-  `useSyncExternalStore` external-store factory (`createExternalStore.ts`).
+  requires `VITE_ORY_SDK_URL`. Ory, Keycloak, and Cognito share a
+  `useSyncExternalStore` external-store factory (`createExternalStore.ts`);
+  Auth0 currently hand-rolls an equivalent store — a candidate for
+  migrating onto the shared factory.
 - There is deliberately no client-side token refresh — session lifetime is
   the IdP/backend's problem, carried by the httpOnly cookie.
 - Multi-tenancy: the selected organization lives in localStorage
