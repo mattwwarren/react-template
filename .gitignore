@@ -43,6 +43,8 @@ yarn-error.log*
 src/api/generated/
 .claude/cw-context.json
 .claude/cw-context.json.lock
+.claude/review-verdict.json
+.claude/review-verdict.md
 
 # Copier
 .templatized/
