@@ -136,7 +136,7 @@ export function createKeycloakProvider(): AuthProviderImplementation {
 
     // Set up token refresh
     useEffect(() => {
-      if (!keycloakInstance || !keycloakInstance.authenticated) return
+      if (!keycloakInstance?.authenticated) return
 
       const refreshInterval = setInterval(() => {
         void keycloakInstance?.updateToken(60).catch(() => {
