@@ -1,7 +1,7 @@
 # AGENTS
 
 ## Project summary
-- React 18 frontend with TypeScript strict mode and Vite 5.x
+- React 19 frontend with TypeScript strict mode and Vite 7 (version authority: `package.json`; see ARCHITECTURE.md)
 - TanStack Query for server state management
 - MSW 2.x for mock API handlers (seeded Faker data)
 - Tailwind CSS + shadcn/ui component library

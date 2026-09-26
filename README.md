@@ -28,8 +28,8 @@ npm run dev
 
 | Layer | Technology |
 |-------|------------|
-| Build | Vite 5.x |
-| Framework | React 18 + TypeScript |
+| Build | Vite 7 |
+| Framework | React 19 + TypeScript |
 | Styling | Tailwind CSS + shadcn/ui |
 | State | TanStack Query |
 | Forms | React Hook Form + Zod |
