@@ -111,7 +111,6 @@ export function resetMockAuth(): void {
   emitChange()
 }
 
-export { DEFAULT_USER }
-
 // Re-export AuthUser type for use by mock handlers
 export type { AuthUser } from '../types'
+export { DEFAULT_USER }
