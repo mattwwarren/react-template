@@ -68,6 +68,9 @@ EXCLUDE_PATTERNS=(
     ".github/workflows/publish-template.yml"
     ".github/workflows/validate-template.yml"
     "scripts/templatize.sh"
+    # cw dispatch/review scratch artifacts (headless workers must not templatize these)
+    ".claude/cw-context.json*"
+    ".claude/review-verdict.*"
 )
 
 # Build rsync exclude arguments
