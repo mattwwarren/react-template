@@ -1,6 +1,7 @@
 {
   "name": "react-template",
   "private": true,
+  "description": "A React frontend application",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
