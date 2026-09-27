@@ -110,16 +110,6 @@ jobs:
         run: |
           grep -qF "port: ${EXPECT_VITE_PORT}," /tmp/test-project/vite.config.ts \
             || { echo "Missing vite.config.ts port: ${EXPECT_VITE_PORT}"; exit 1; }
-          grep -qF "port: \"${EXPECT_VITE_PORT}\"" /tmp/test-project/devspace.yaml \
-            || { echo "Missing DevSpace UI port: ${EXPECT_VITE_PORT}"; exit 1; }
-          grep -qF "containerPort: ${EXPECT_VITE_PORT}" /tmp/test-project/devspace.yaml \
-            || { echo "Missing DevSpace container port: ${EXPECT_VITE_PORT}"; exit 1; }
-          grep -qF "targetPort: ${EXPECT_VITE_PORT}" /tmp/test-project/devspace.yaml \
-            || { echo "Missing DevSpace service target port: ${EXPECT_VITE_PORT}"; exit 1; }
-          grep -qF "EXPOSE ${EXPECT_VITE_PORT}" /tmp/test-project/docker/Dockerfile \
-            || { echo "Missing Docker dev port: ${EXPECT_VITE_PORT}"; exit 1; }
-          grep -qF "http://localhost:${EXPECT_VITE_PORT}" /tmp/test-project/playwright.config.ts \
-            || { echo "Missing Playwright port: ${EXPECT_VITE_PORT}"; exit 1; }
           echo "OK: vite.config.ts port ${EXPECT_VITE_PORT}"
 
       - name: Assert devspace.yaml wiring differs per answer

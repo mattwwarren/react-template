@@ -141,24 +141,8 @@ for file in "${JINJA_TEMPLATE_FILES[@]}"; do
             # so an invocation-time env var still overrides the rendered default.
             sed -i "s|value: \"false\"|value: \"{{ 'true' if use_mocks else 'false' }}\"|" "${OUTPUT_DIR}/${file}"
             sed -i "s|default: \"http://fastapi-template.warren-enterprises-ltd.svc.cluster.local\"|default: \"{{ api_url }}\"|" "${OUTPUT_DIR}/${file}"
-            sed -i "s|${DEFAULT_PORT}|${PORT_TEMPLATE}|g" "${OUTPUT_DIR}/${file}"
             assert_templated "${OUTPUT_DIR}/${file}" "value: \"{{ 'true' if use_mocks else 'false' }}\""
             assert_templated "${OUTPUT_DIR}/${file}" "default: \"{{ api_url }}\""
-            assert_templated "${OUTPUT_DIR}/${file}" "port: \"${PORT_TEMPLATE}\""
-            assert_templated "${OUTPUT_DIR}/${file}" "containerPort: ${PORT_TEMPLATE}"
-            assert_templated "${OUTPUT_DIR}/${file}" "targetPort: ${PORT_TEMPLATE}"
-        fi
-        if [[ "${file}" == "docker/Dockerfile" ]]; then
-            sed -i "s|EXPOSE ${DEFAULT_PORT}|EXPOSE ${PORT_TEMPLATE}|" "${OUTPUT_DIR}/${file}"
-            assert_templated "${OUTPUT_DIR}/${file}" "EXPOSE ${PORT_TEMPLATE}"
-        fi
-        if [[ "${file}" == "package.json" ]]; then
-            sed -i "s|${DEFAULT_PORT}:${DEFAULT_PORT}|${PORT_TEMPLATE}:${PORT_TEMPLATE}|g" "${OUTPUT_DIR}/${file}"
-            assert_templated "${OUTPUT_DIR}/${file}" "docker run -p ${PORT_TEMPLATE}:${PORT_TEMPLATE}"
-        fi
-        if [[ "${file}" == "playwright.config.ts" || "${file}" == "playwright.integration.config.ts" ]]; then
-            sed -i "s|http://localhost:${DEFAULT_PORT}|http://localhost:${PORT_TEMPLATE}|g" "${OUTPUT_DIR}/${file}"
-            assert_templated "${OUTPUT_DIR}/${file}" "http://localhost:${PORT_TEMPLATE}"
         fi
         if [[ "${file}" == "package.json" ]]; then
             assert_templated "${OUTPUT_DIR}/${file}" "\"description\": {{ description | tojson }}"
