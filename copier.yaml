@@ -22,6 +22,9 @@ _exclude:
   - "package-lock.json"
   # GitHub Actions uses ${{ }} which conflicts with Jinja2
   - ".github/workflows/publish-template.yml"
+  # cw dispatch/review scratch artifacts (headless workers must not commit these)
+  - ".claude/cw-context.json*"
+  - ".claude/review-verdict.*"
 
 project_name:
   type: str
