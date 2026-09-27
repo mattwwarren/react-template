@@ -65,7 +65,9 @@
       "!**/test-results",
       "!**/public/mockServiceWorker.js",
       "!**/src/api/generated",
-      "!**/*.css"
+      "!**/*.css",
+      "!**/.claude/cw-context.json*",
+      "!**/.claude/review-verdict.*"
     ]
   }
 }
