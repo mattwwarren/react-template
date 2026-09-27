@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 // This file exports both factory functions and components, which is expected for auth providers
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
 import type { AuthProviderImplementation, AuthState, AuthUser } from '../types'
 import { createExternalAuthStore } from './createExternalStore'
 
@@ -223,11 +223,5 @@ function Auth0ContextBridge({ children }: { children: React.ReactNode }): React.
 // Reset for testing
 export function resetAuth0(): void {
   auth0Context = null
-  currentState = {
-    user: null,
-    isAuthenticated: false,
-    isLoading: true,
-    error: null,
-  }
-  emitChange()
+  store.reset()
 }
