@@ -115,12 +115,13 @@ function updateStateFromAuth0Context(): void {
  */
 export function createAuth0Provider(): AuthProviderImplementation {
   const useAuthState = (): AuthState => {
-    return useSyncExternalStore(subscribe, getSnapshot, () => ({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      error: null,
-    }))
+    const state = store.useStore()
+    return {
+      user: state.user,
+      isAuthenticated: state.user !== null,
+      isLoading: state.isLoading,
+      error: state.error,
+    }
   }
 
   const login = async (): Promise<void> => {
