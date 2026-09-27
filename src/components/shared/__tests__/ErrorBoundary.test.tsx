@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ErrorBoundary } from '../ErrorBoundary'
 
@@ -115,5 +116,30 @@ describe('ErrorBoundary', () => {
     // Error message in pre block
     const errorPre = screen.getByText('Test error message')
     expect(errorPre.tagName).toBe('PRE')
+  })
+})
+
+describe('ErrorBoundary with routing', () => {
+  const originalError = console.error
+  beforeEach(() => {
+    console.error = vi.fn()
+  })
+  afterEach(() => {
+    console.error = originalError
+  })
+
+  it('catches an error thrown during route element rendering', () => {
+    render(
+      <ErrorBoundary>
+        <MemoryRouter initialEntries={['/boom']}>
+          <Routes>
+            <Route path="/boom" element={<ThrowError shouldThrow={true} />} />
+          </Routes>
+        </MemoryRouter>
+      </ErrorBoundary>
+    )
+
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /return to dashboard/i })).toBeInTheDocument()
   })
 })
