@@ -23,7 +23,7 @@ export default defineConfig({
       },
     },
     globals: true,
-    environment: 'jsdom',
+    environment: './src/test/env/jsdom-native-fetch.ts',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     coverage: {
