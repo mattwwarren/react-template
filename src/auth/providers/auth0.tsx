@@ -96,7 +96,7 @@ function ensureSdkLoaded(): Promise<boolean> {
 function updateStateFromAuth0Context(): void {
   if (!auth0Context) return
 
-  const { isAuthenticated, isLoading, user, error } = auth0Context
+  const { isLoading, user, error } = auth0Context
   const authUser: AuthUser | null = user
     ? {
         id: user.sub,
@@ -105,13 +105,7 @@ function updateStateFromAuth0Context(): void {
       }
     : null
 
-  currentState = {
-    user: authUser,
-    isAuthenticated,
-    isLoading,
-    error: error?.message || null,
-  }
-  emitChange()
+  store.setState({ user: authUser, isLoading, error: error?.message || null })
 }
 
 /**
