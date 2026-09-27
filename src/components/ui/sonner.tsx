@@ -9,7 +9,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
 
   return (
     <Sonner
-      theme={theme as ToasterProps['theme']}
+      // shadcn-patch(exactOptionalPropertyTypes): `theme` is destructured with a `= 'system'` default
+      // above, so it is always defined at this point; NonNullable narrows the cast target so
+      // exactOptionalPropertyTypes accepts the assignment. No runtime change — theme was already
+      // guaranteed defined before this patch.
+      theme={theme as NonNullable<ToasterProps['theme']>}
       className="toaster group"
       icons={{
         success: <CircleCheck className="h-4 w-4" />,

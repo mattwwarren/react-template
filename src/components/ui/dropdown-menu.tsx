@@ -98,7 +98,11 @@ const DropdownMenuCheckboxItem = React.forwardRef<
       'relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}
-    checked={checked}
+    // shadcn-patch(exactOptionalPropertyTypes): `checked` may legitimately be undefined (uncontrolled
+    // usage). exactOptionalPropertyTypes forbids explicitly assigning `undefined` to Radix's optional
+    // `checked?: CheckedState`, even though an explicit-undefined prop and an omitted prop are runtime-
+    // identical here. This cast only erases the type distinction; the value passed through is unchanged.
+    checked={checked as NonNullable<typeof checked>}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
