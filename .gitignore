@@ -46,7 +46,5 @@ src/api/generated/
 .templatized/
 
 # cw dispatch/review scratch artifacts
-.claude/cw-context.json
-.claude/cw-context.json.lock
-.claude/review-verdict.json
-.claude/review-verdict.md
+.claude/cw-context.json*
+.claude/review-verdict.*
