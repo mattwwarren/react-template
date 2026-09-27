@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from '@/auth'
 import { Layout } from '@/components/layout'
-import { ErrorBoundary, LoadingSpinner, RouteErrorBoundary } from '@/components/shared'
+import { ErrorBoundary, LoadingSpinner } from '@/components/shared'
 import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/features/auth'
 import { SocketProvider } from '@/realtime'
@@ -66,13 +66,13 @@ function App(): React.ReactElement {
               >
                 <Routes>
                   {/* Public routes - no layout, no auth required */}
-                  <Route errorElement={<RouteErrorBoundary />}>
+                  <Route>
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />
                   </Route>
 
                   {/* Protected routes - require authentication */}
-                  <Route element={<ProtectedRoute />} errorElement={<RouteErrorBoundary />}>
+                  <Route element={<ProtectedRoute />}>
                     <Route element={<Layout />}>
                       <Route path="/" element={<DashboardPage />} />
                       <Route path="/users" element={<UsersPage />} />
