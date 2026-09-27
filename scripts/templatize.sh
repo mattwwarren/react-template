@@ -109,8 +109,11 @@ echo -e "${GREEN}[2/7] Templating config files (.jinja)...${NC}"
 JINJA_TEMPLATE_FILES=(
     "package.json"
     "devspace.yaml"
+    "docker/Dockerfile"
     "index.html"
     ".copier-config.json"
+    "playwright.config.ts"
+    "playwright.integration.config.ts"
 )
 
 for file in "${JINJA_TEMPLATE_FILES[@]}"; do
@@ -126,7 +129,7 @@ for file in "${JINJA_TEMPLATE_FILES[@]}"; do
             sed -i "s/React Template/${SED_NAME}/g" "${OUTPUT_DIR}/${file}"
         fi
         if grep -q "A React frontend application" "${OUTPUT_DIR}/${file}" 2>/dev/null; then
-            sed -i "s|A React frontend application|{{ description }}|g" "${OUTPUT_DIR}/${file}"
+            sed -i 's#"description": "A React frontend application"#"description": {{ description | tojson }}#g' "${OUTPUT_DIR}/${file}"
         fi
         if [[ "${file}" == "devspace.yaml" ]]; then
             # Wire k8s dev-container env defaults to the same copier answers as
@@ -136,11 +139,23 @@ for file in "${JINJA_TEMPLATE_FILES[@]}"; do
             # so an invocation-time env var still overrides the rendered default.
             sed -i "s|value: \"false\"|value: \"{{ 'true' if use_mocks else 'false' }}\"|" "${OUTPUT_DIR}/${file}"
             sed -i "s|default: \"http://fastapi-template.warren-enterprises-ltd.svc.cluster.local\"|default: \"{{ api_url }}\"|" "${OUTPUT_DIR}/${file}"
+            sed -i "s|5173|{{ port }}|g" "${OUTPUT_DIR}/${file}"
             assert_templated "${OUTPUT_DIR}/${file}" "value: \"{{ 'true' if use_mocks else 'false' }}\""
             assert_templated "${OUTPUT_DIR}/${file}" "default: \"{{ api_url }}\""
         fi
+        if [[ "${file}" == "docker/Dockerfile" ]]; then
+            sed -i "s|EXPOSE 5173|EXPOSE {{ port }}|" "${OUTPUT_DIR}/${file}"
+            assert_templated "${OUTPUT_DIR}/${file}" "EXPOSE {{ port }}"
+        fi
         if [[ "${file}" == "package.json" ]]; then
-            assert_templated "${OUTPUT_DIR}/${file}" "\"description\": \"{{ description }}\""
+            sed -i "s|5173:5173|{{ port }}:{{ port }}|g" "${OUTPUT_DIR}/${file}"
+        fi
+        if [[ "${file}" == "playwright.config.ts" || "${file}" == "playwright.integration.config.ts" ]]; then
+            sed -i "s|http://localhost:5173|http://localhost:{{ port }}|g" "${OUTPUT_DIR}/${file}"
+            assert_templated "${OUTPUT_DIR}/${file}" "http://localhost:{{ port }}"
+        fi
+        if [[ "${file}" == "package.json" ]]; then
+            assert_templated "${OUTPUT_DIR}/${file}" "\"description\": {{ description | tojson }}"
         fi
         # Rename to .jinja
         mv "${OUTPUT_DIR}/${file}" "${OUTPUT_DIR}/${file}.jinja"
@@ -166,12 +181,12 @@ for file in "${ENV_TEMPLATE_FILES[@]}"; do
             -e "s|^VITE_API_URL=.*|VITE_API_URL={{ api_url }}|" \
             -e "s|^VITE_WS_URL=.*|VITE_WS_URL={{ api_url }}|" \
             -e "s|^VITE_USE_MOCKS=.*|VITE_USE_MOCKS={{ 'true' if use_mocks else 'false' }}|" \
-            -e "s|^VITE_AUTH_PROVIDER=.*|VITE_AUTH_PROVIDER={{ auth_provider if auth_enabled else 'mock' }}|" \
+            -e "s|^VITE_AUTH_PROVIDER=.*|VITE_AUTH_PROVIDER={{ auth_provider if auth_enabled and auth_provider != 'none' else 'mock' }}|" \
             "${target}"
         assert_templated "${target}" "VITE_API_URL={{ api_url }}"
         assert_templated "${target}" "VITE_WS_URL={{ api_url }}"
         assert_templated "${target}" "VITE_USE_MOCKS={{ 'true' if use_mocks else 'false' }}"
-        assert_templated "${target}" "VITE_AUTH_PROVIDER={{ auth_provider if auth_enabled else 'mock' }}"
+        assert_templated "${target}" "VITE_AUTH_PROVIDER={{ auth_provider if auth_enabled and auth_provider != 'none' else 'mock' }}"
         mv "${target}" "${target}.jinja"
         echo "  Templated: ${file} -> ${file}.jinja"
     fi

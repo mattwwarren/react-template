@@ -26,7 +26,8 @@ to the `copier` branch.
 > - `use_mocks`/`api_url`/`auth_enabled`/`auth_provider` now also shape
 >   generated `.env.development`/`.env.example` (`VITE_USE_MOCKS`,
 >   `VITE_API_URL`, `VITE_WS_URL`, `VITE_AUTH_PROVIDER`); `port` shapes
->   `vite.config.ts`'s dev-server port; `description` shapes generated
+>   `vite.config.ts`'s dev-server port and the generated DevSpace, Docker,
+>   and Playwright development settings; `description` shapes generated
 >   `package.json`'s `"description"` field. `validate-template.yml`'s CI
 >   matrix asserts each differs per answer.
 > - `use_mocks`/`api_url` also shape `devspace.yaml`'s k8s dev-container env
@@ -38,9 +39,8 @@ to the `copier` branch.
 >   and the full MSW mock layer regardless of the answers — this is a
 >   **runtime env-var switch** (`VITE_AUTH_PROVIDER`, `VITE_USE_MOCKS`), not
 >   conditional codegen, keeping the template a working demonstration of
->   every supported pattern. Remaining, narrower gaps: `devspace.yaml`'s port
->   literals (`5173`) and any Docker/Playwright port references are not wired
->   to `port` (scope was deliberately limited to `vite.config.ts`); and
+>   every supported pattern. Remaining, narrower gaps: production Docker /
+>   nginx ports and documentation examples remain fixed; and
 >   `vite.config.ts`'s dev-server `/api` proxy target (line 18) still reads
 >   raw `process.env.VITE_API_URL` at config-eval time rather than the wired
 >   `.env.development` file, so it stays pinned to `http://localhost:8000`
