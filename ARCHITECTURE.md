@@ -96,10 +96,10 @@ Provider nesting (outer → inner): `ErrorBoundary` → `QueryClientProvider` �
 - Cross-tab org sync: a `storage` listener on `selectedOrganizationId`
   hard-reloads the page when another tab switches organization.
 
-> **Known gap:** the route tree sets `errorElement`/`RouteErrorBoundary`,
-> which only functions under a data router (`createBrowserRouter`); with the
-> declarative `<Routes>` used here it is inert, and only the top-level class
-> `ErrorBoundary` actually catches render errors.
+> The top-level class `ErrorBoundary` is the route error mechanism: it
+> catches render errors anywhere in the tree, including during route element
+> rendering. `errorElement`/`useRouteError` are data-router-only APIs
+> (`createBrowserRouter`) and are not used here.
 
 ## Data flow
 
