@@ -44,3 +44,9 @@ src/api/generated/
 
 # Copier
 .templatized/
+
+# cw / auto-dev pipeline session state
+.claude/cw-context.json
+.claude/cw-context.json.lock
+.claude/review-verdict.json
+.claude/review-verdict.md
