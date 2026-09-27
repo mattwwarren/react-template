@@ -4,7 +4,7 @@
 # ============================================================================
 # Stage: base - Common dependencies
 # ============================================================================
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 WORKDIR /app
 COPY package*.json ./
 
@@ -35,7 +35,7 @@ RUN npm run build
 # ============================================================================
 # Stage: prod - Production nginx server
 # ============================================================================
-FROM nginx:alpine AS prod
+FROM nginx:1.31.6-alpine AS prod
 
 # Create non-root user
 RUN addgroup -g 1000 app && adduser -u 1000 -G app -s /bin/sh -D app
