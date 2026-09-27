@@ -211,6 +211,11 @@ backend":
    project-references shell with no `compilerOptions.paths`, so the CLI
    cannot resolve the `@/*` alias (which lives only in `tsconfig.app.json`)
    and silently writes to a bogus `./@/components/ui/` directory without it.
+   Registry output occasionally needs a type-only edit to satisfy this
+   repo's `exactOptionalPropertyTypes: true` — every such line is prefixed
+   with a `// shadcn-patch(exactOptionalPropertyTypes): <why>` comment so the
+   exception stays greppable and must be re-applied after the next CLI
+   refresh (enforced by `src/components/ui/__tests__/shadcn-patch-markers.test.ts`).
 6. MSW is the only mock layer; factories are seeded and deterministic.
 7. Only the integration Playwright tier talks to a real backend.
 8. Biome is the lint/format authority (pinned exact; enforced by lint-staged
