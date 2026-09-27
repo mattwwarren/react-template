@@ -201,7 +201,16 @@ backend":
 4. Tenancy is explicit: validated `X-Selected-Org` header, cleared on
    logout/403.
 5. shadcn primitives in `ui/` stay unmodified; feature-owned code lives in
-   its feature directory.
+   its feature directory. Primitives in `ui/` are refreshed by re-running
+   `npx shadcn@latest add <component> --overwrite --path src/components/ui`
+   and accepting the output verbatim (plus a Biome format pass) — never by
+   hand-editing the generated files. React 19 ref-as-prop syntax arrives
+   here once upstream shadcn drops `forwardRef`; until then this mechanism
+   only refreshes styling. Note: `add` must be invoked with
+   `--path src/components/ui` in this repo — the root `tsconfig.json` is a
+   project-references shell with no `compilerOptions.paths`, so the CLI
+   cannot resolve the `@/*` alias (which lives only in `tsconfig.app.json`)
+   and silently writes to a bogus `./@/components/ui/` directory without it.
 6. MSW is the only mock layer; factories are seeded and deterministic.
 7. Only the integration Playwright tier talks to a real backend.
 8. Biome is the lint/format authority (pinned exact; enforced by lint-staged
