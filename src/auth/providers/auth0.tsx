@@ -73,13 +73,7 @@ async function loadAuth0Sdk(): Promise<boolean> {
     console.error(
       'Auth0 SDK (@auth0/auth0-react) not installed. Please run: npm install @auth0/auth0-react'
     )
-    currentState = {
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      error: 'Auth0 SDK not available',
-    }
-    emitChange()
+    store.setError('Auth0 SDK not available')
     return false
   }
 }
