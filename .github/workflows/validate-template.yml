@@ -30,13 +30,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # expect_* fields assert that non-identity copier answers actually reach
+        # generated files (ticket #14). Multi-value fields are `|`-separated.
+        #   expect_env         KEY=value lines expected in .env.development/.env.example
+        #   expect_vite_port   dev-server port literal expected in vite.config.ts
+        #   expect_devspace    VITE_USE_MOCKS=<v> / API_URL_DEFAULT=<v> expected in devspace.yaml
+        #   expect_description "description" value expected in package.json
         include:
           - name: default
             data_args: ""
+            expect_env: "VITE_AUTH_PROVIDER=mock|VITE_USE_MOCKS=true|VITE_API_URL=http://localhost:8000"
+            expect_devspace: "VITE_USE_MOCKS=true|API_URL_DEFAULT=http://localhost:8000"
+            expect_description: "A React frontend application"
           - name: auth-ory
             data_args: "--data auth_enabled=true --data auth_provider=ory"
+            expect_env: "VITE_AUTH_PROVIDER=ory"
           - name: no-mocks
             data_args: "--data use_mocks=false"
+            expect_env: "VITE_USE_MOCKS=false"
+            expect_devspace: "VITE_USE_MOCKS=false|API_URL_DEFAULT=http://localhost:8000"
+          - name: custom-port-and-api
+            data_args: '--data port=4000 --data api_url=http://backend.internal:9000 --data description="Custom Test App"'
+            expect_env: "VITE_API_URL=http://backend.internal:9000"
+            expect_vite_port: "4000"
+            expect_devspace: "VITE_USE_MOCKS=true|API_URL_DEFAULT=http://backend.internal:9000"
+            expect_description: "Custom Test App"
 
     name: Validate (${{ matrix.name }})
 
@@ -68,6 +86,80 @@ jobs:
             --defaults --trust \
             --data project_name="Test Project" \
             ${{ matrix.data_args }}
+
+      # .env.example is checked alongside .env.development: _tasks.py copies it to
+      # .env.development.local, which Vite loads with higher precedence.
+      - name: Assert env wiring differs per answer
+        if: matrix.expect_env
+        env:
+          EXPECT_ENV: ${{ matrix.expect_env }}
+        run: |
+          IFS='|' read -ra LINES <<< "${EXPECT_ENV}"
+          for envfile in .env.development .env.example; do
+            for line in "${LINES[@]}"; do
+              grep -qxF "${line}" "/tmp/test-project/${envfile}" \
+                || { echo "Missing ${envfile} line: ${line}"; exit 1; }
+            done
+          done
+          echo "OK: env wiring (${EXPECT_ENV})"
+
+      - name: Assert vite.config.ts port wiring
+        if: matrix.expect_vite_port
+        env:
+          EXPECT_VITE_PORT: ${{ matrix.expect_vite_port }}
+        run: |
+          grep -qF "port: ${EXPECT_VITE_PORT}," /tmp/test-project/vite.config.ts \
+            || { echo "Missing vite.config.ts port: ${EXPECT_VITE_PORT}"; exit 1; }
+          echo "OK: vite.config.ts port ${EXPECT_VITE_PORT}"
+
+      - name: Assert devspace.yaml wiring differs per answer
+        if: matrix.expect_devspace
+        env:
+          EXPECT_DEVSPACE: ${{ matrix.expect_devspace }}
+        run: |
+          IFS='|' read -ra PAIRS <<< "${EXPECT_DEVSPACE}"
+          for pair in "${PAIRS[@]}"; do
+            key="${pair%%=*}"; val="${pair#*=}"
+            case "$key" in
+              VITE_USE_MOCKS)
+                grep -A1 'name: VITE_USE_MOCKS' /tmp/test-project/devspace.yaml | grep -qF "value: \"${val}\"" \
+                  || { echo "Missing devspace.yaml VITE_USE_MOCKS=${val}"; exit 1; }
+                ;;
+              API_URL_DEFAULT)
+                grep -A1 '  API_URL:' /tmp/test-project/devspace.yaml | grep -qF "default: \"${val}\"" \
+                  || { echo "Missing devspace.yaml API_URL default=${val}"; exit 1; }
+                ;;
+              *)
+                echo "Unknown expect_devspace key: ${key}"; exit 1
+                ;;
+            esac
+          done
+          echo "OK: devspace.yaml wiring (${EXPECT_DEVSPACE})"
+
+      - name: Assert package.json description wiring
+        if: matrix.expect_description
+        env:
+          EXPECT_DESCRIPTION: ${{ matrix.expect_description }}
+        run: |
+          grep -qF "\"description\": \"${EXPECT_DESCRIPTION}\"" /tmp/test-project/package.json \
+            || { echo "Missing package.json description=${EXPECT_DESCRIPTION}"; exit 1; }
+          echo "OK: package.json description"
+
+      # Scoped to the paths ticket #14 touches -- a repo-wide grep would
+      # false-positive on JSX {{ }} object literals and Actions ${{ }} syntax.
+      - name: Check no unrendered template markers in fixed paths
+        run: |
+          if grep -rnE '\{\{|\{%|__PROJECT_(NAME|SLUG|SLUG_UNDERSCORE)__' \
+            /tmp/test-project/.env.development \
+            /tmp/test-project/.env.example \
+            /tmp/test-project/vite.config.ts \
+            /tmp/test-project/devspace.yaml \
+            /tmp/test-project/deployment \
+            /tmp/test-project/tests; then
+            echo "Unrendered template marker found"
+            exit 1
+          fi
+          echo "OK: no unrendered template markers"
 
       - name: Install dependencies
         run: cd /tmp/test-project && npm install
