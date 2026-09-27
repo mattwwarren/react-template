@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Upload } from 'lucide-react'
-import { useCallback, useRef } from 'react'
+import { useCallback, useId, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -43,6 +44,7 @@ interface UploadDialogProps {
 export function UploadDialog({ open, onOpenChange }: UploadDialogProps): React.ReactElement {
   const toast = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputId = useId()
   const { data: orgsData, isLoading: orgsLoading } = useOrganizations({
     page: 1,
     size: 100,
@@ -130,12 +132,10 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps): React.R
                 </FormItem>
               )}
             />
-            <FormItem>
-              <FormLabel>File</FormLabel>
-              <FormControl>
-                <Input ref={fileInputRef} type="file" />
-              </FormControl>
-            </FormItem>
+            <div className="space-y-2">
+              <Label htmlFor={fileInputId}>File</Label>
+              <Input id={fileInputId} ref={fileInputRef} type="file" />
+            </div>
             <div className="flex justify-end gap-2">
               <Button type="submit" disabled={uploadMutation.isPending}>
                 <Upload className="mr-2 h-4 w-4" />
