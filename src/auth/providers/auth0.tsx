@@ -2,6 +2,7 @@
 // This file exports both factory functions and components, which is expected for auth providers
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import type { AuthProviderImplementation, AuthState, AuthUser } from '../types'
+import { createExternalAuthStore } from './createExternalStore'
 
 // Auth0 SDK types (optional dependency)
 interface Auth0User {
@@ -30,29 +31,8 @@ interface Auth0ProviderProps {
   children: React.ReactNode
 }
 
-// External store for auth state
-let currentState: AuthState = {
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-  error: null,
-}
-const listeners = new Set<() => void>()
-
-function emitChange(): void {
-  for (const listener of listeners) {
-    listener()
-  }
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener)
-  return () => listeners.delete(listener)
-}
-
-function getSnapshot(): AuthState {
-  return currentState
-}
+// External store for auth state (using shared utility)
+const store = createExternalAuthStore()
 
 // Store for auth0 context and SDK
 let auth0Context: Auth0Context | null = null
