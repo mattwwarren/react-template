@@ -48,3 +48,4 @@ src/api/generated/
 # cw dispatch/review scratch artifacts
 .claude/cw-context.json*
 .claude/review-verdict.*
+.claude/prep-pr-state.json*

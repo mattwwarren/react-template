@@ -25,6 +25,7 @@ _exclude:
   # cw dispatch/review scratch artifacts (headless workers must not commit these)
   - ".claude/cw-context.json*"
   - ".claude/review-verdict.*"
+  - ".claude/prep-pr-state.json*"
 
 project_name:
   type: str

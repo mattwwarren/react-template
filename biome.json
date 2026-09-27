@@ -67,7 +67,8 @@
       "!**/src/api/generated",
       "!**/*.css",
       "!**/.claude/cw-context.json*",
-      "!**/.claude/review-verdict.*"
+      "!**/.claude/review-verdict.*",
+      "!**/.claude/prep-pr-state.json*"
     ]
   }
 }

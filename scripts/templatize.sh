@@ -71,6 +71,7 @@ EXCLUDE_PATTERNS=(
     # cw dispatch/review scratch artifacts (headless workers must not templatize these)
     ".claude/cw-context.json*"
     ".claude/review-verdict.*"
+    ".claude/prep-pr-state.json*"
 )
 
 # Build rsync exclude arguments
