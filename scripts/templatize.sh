@@ -90,6 +90,8 @@ PLACEHOLDER_SLUG_UNDERSCORE="__PROJECT_SLUG_UNDERSCORE__"
 SED_SLUG='\x7B\x7B project_slug \x7D\x7D'
 SED_NAME='\x7B\x7B project_name \x7D\x7D'
 SED_SLUG_UNDERSCORE='\x7B\x7B project_slug_underscore \x7D\x7D'
+DEFAULT_PORT='5173'
+PORT_TEMPLATE='{{ port }}'
 
 # Fail loudly if an expected substitution didn't land (the source file drifted
 # away from the literal the sed targets, so the copier answer would silently
@@ -139,20 +141,24 @@ for file in "${JINJA_TEMPLATE_FILES[@]}"; do
             # so an invocation-time env var still overrides the rendered default.
             sed -i "s|value: \"false\"|value: \"{{ 'true' if use_mocks else 'false' }}\"|" "${OUTPUT_DIR}/${file}"
             sed -i "s|default: \"http://fastapi-template.warren-enterprises-ltd.svc.cluster.local\"|default: \"{{ api_url }}\"|" "${OUTPUT_DIR}/${file}"
-            sed -i "s|5173|{{ port }}|g" "${OUTPUT_DIR}/${file}"
+            sed -i "s|${DEFAULT_PORT}|${PORT_TEMPLATE}|g" "${OUTPUT_DIR}/${file}"
             assert_templated "${OUTPUT_DIR}/${file}" "value: \"{{ 'true' if use_mocks else 'false' }}\""
             assert_templated "${OUTPUT_DIR}/${file}" "default: \"{{ api_url }}\""
+            assert_templated "${OUTPUT_DIR}/${file}" "port: \"${PORT_TEMPLATE}\""
+            assert_templated "${OUTPUT_DIR}/${file}" "containerPort: ${PORT_TEMPLATE}"
+            assert_templated "${OUTPUT_DIR}/${file}" "targetPort: ${PORT_TEMPLATE}"
         fi
         if [[ "${file}" == "docker/Dockerfile" ]]; then
-            sed -i "s|EXPOSE 5173|EXPOSE {{ port }}|" "${OUTPUT_DIR}/${file}"
-            assert_templated "${OUTPUT_DIR}/${file}" "EXPOSE {{ port }}"
+            sed -i "s|EXPOSE ${DEFAULT_PORT}|EXPOSE ${PORT_TEMPLATE}|" "${OUTPUT_DIR}/${file}"
+            assert_templated "${OUTPUT_DIR}/${file}" "EXPOSE ${PORT_TEMPLATE}"
         fi
         if [[ "${file}" == "package.json" ]]; then
-            sed -i "s|5173:5173|{{ port }}:{{ port }}|g" "${OUTPUT_DIR}/${file}"
+            sed -i "s|${DEFAULT_PORT}:${DEFAULT_PORT}|${PORT_TEMPLATE}:${PORT_TEMPLATE}|g" "${OUTPUT_DIR}/${file}"
+            assert_templated "${OUTPUT_DIR}/${file}" "docker run -p ${PORT_TEMPLATE}:${PORT_TEMPLATE}"
         fi
         if [[ "${file}" == "playwright.config.ts" || "${file}" == "playwright.integration.config.ts" ]]; then
-            sed -i "s|http://localhost:5173|http://localhost:{{ port }}|g" "${OUTPUT_DIR}/${file}"
-            assert_templated "${OUTPUT_DIR}/${file}" "http://localhost:{{ port }}"
+            sed -i "s|http://localhost:${DEFAULT_PORT}|http://localhost:${PORT_TEMPLATE}|g" "${OUTPUT_DIR}/${file}"
+            assert_templated "${OUTPUT_DIR}/${file}" "http://localhost:${PORT_TEMPLATE}"
         fi
         if [[ "${file}" == "package.json" ]]; then
             assert_templated "${OUTPUT_DIR}/${file}" "\"description\": {{ description | tojson }}"
@@ -195,8 +201,8 @@ done
 # vite.config.ts: dev-server port only. The /api proxy target deliberately stays
 # on raw process.env (see ARCHITECTURE.md Known gap).
 if [[ -f "${OUTPUT_DIR}/vite.config.ts" ]]; then
-    sed -i "s|port: 5173,|port: {{ port }},|" "${OUTPUT_DIR}/vite.config.ts"
-    assert_templated "${OUTPUT_DIR}/vite.config.ts" "port: {{ port }},"
+    sed -i "s|port: ${DEFAULT_PORT},|port: ${PORT_TEMPLATE},|" "${OUTPUT_DIR}/vite.config.ts"
+    assert_templated "${OUTPUT_DIR}/vite.config.ts" "port: ${PORT_TEMPLATE},"
     mv "${OUTPUT_DIR}/vite.config.ts" "${OUTPUT_DIR}/vite.config.ts.jinja"
     echo "  Templated: vite.config.ts -> vite.config.ts.jinja"
 fi
