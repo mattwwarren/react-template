@@ -1,6 +1,9 @@
+import type { AmplifyConfig } from 'aws-amplify'
 import { useEffect } from 'react'
 import type { AuthProviderImplementation, AuthState } from '../types'
 import { createExternalAuthStore } from './createExternalStore'
+
+type AmplifyCognitoConfig = NonNullable<NonNullable<AmplifyConfig['Auth']>['Cognito']>
 
 // Cognito/Amplify types (optional dependency)
 interface AuthSession {
@@ -57,7 +60,7 @@ async function initCognito(): Promise<void> {
     const config = getCognitoConfig()
 
     // Configure Amplify
-    const cognitoConfig: Record<string, unknown> = {
+    const cognitoConfig: AmplifyCognitoConfig = {
       userPoolId: config.userPoolId,
       userPoolClientId: config.userPoolClientId,
     }
@@ -72,8 +75,7 @@ async function initCognito(): Promise<void> {
         },
       }
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Amplify.configure({ Auth: { Cognito: cognitoConfig } } as any)
+    Amplify.configure({ Auth: { Cognito: cognitoConfig } })
 
     // Check current session
     const session = (await fetchAuthSession()) as AuthSession

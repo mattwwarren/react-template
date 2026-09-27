@@ -88,7 +88,7 @@ declare module 'keycloak-js' {
 }
 
 declare module 'aws-amplify' {
-  interface AmplifyConfig {
+  export interface AmplifyConfig {
     Auth?: {
       Cognito?: {
         userPoolId: string

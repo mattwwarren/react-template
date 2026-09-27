@@ -22,4 +22,4 @@ export function resetAllHandlers(): void {
 }
 
 // Re-export individual reset functions for granular control
-export { resetAuth, resetUsers, resetOrganizations, resetMemberships, resetDocuments }
+export { resetAuth, resetDocuments, resetMemberships, resetOrganizations, resetUsers }
