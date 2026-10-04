@@ -20,16 +20,33 @@ repo to a Copier template at release time (name/slug substitutions plus
 `_tasks.py` after generation), and `publish-template.yml` pushes the result
 to the `copier` branch.
 
-> **Known gap:** of the Copier variables, only the identity ones
-> (`project_name`/`project_slug`) shape the generated **code**.
-> `auth_enabled`, `auth_provider`, `use_mocks`, `port`, and `api_url` are
-> consumed only by documentation templating (they drive Jinja branches in
-> the generated `QUICKSTART.md`) — no application config or source file
-> branches on them, so every generated project ships all auth providers and
-> the full MSW mock layer regardless of the answers, and `vite.config.ts` /
-> `.env.development` keep their hardcoded port/URL. The real switches are
-> **runtime env vars**: `VITE_AUTH_PROVIDER`, `VITE_USE_MOCKS`,
-> `VITE_API_URL`.
+> **Known gap (narrowed):** identity vars (`project_name`/`project_slug`)
+> continue to shape generated code, unchanged.
+>
+> - `use_mocks`/`api_url`/`auth_enabled`/`auth_provider` now also shape
+>   generated `.env.development`/`.env.example` (`VITE_USE_MOCKS`,
+>   `VITE_API_URL`, `VITE_WS_URL`, `VITE_AUTH_PROVIDER`); `port` shapes
+>   `vite.config.ts`'s dev-server port; `description` shapes generated
+>   `package.json`'s `"description"` field. `validate-template.yml`'s CI
+>   matrix asserts each differs per answer.
+> - `use_mocks`/`api_url` also shape `devspace.yaml`'s k8s dev-container env
+>   defaults (`VITE_USE_MOCKS` value, `API_URL` var default). `API_URL` keeps
+>   `source: env`, so a meta-workspace/dependency deployment can still
+>   override it at `devspace` invocation time regardless of the
+>   copier-rendered default.
+> - By design, every generated project still ships all auth-provider modules
+>   and the full MSW mock layer regardless of the answers — this is a
+>   **runtime env-var switch** (`VITE_AUTH_PROVIDER`, `VITE_USE_MOCKS`), not
+>   conditional codegen, keeping the template a working demonstration of
+>   every supported pattern. Remaining, narrower gaps: production Docker /
+>   nginx ports, DevSpace/Docker/Playwright development port references, and
+>   documentation examples remain fixed; and
+>   `vite.config.ts`'s dev-server `/api` proxy target (line 18) still reads
+>   raw `process.env.VITE_API_URL` at config-eval time rather than the wired
+>   `.env.development` file, so it stays pinned to `http://localhost:8000`
+>   regardless of the answered `api_url` unless a shell env var is set —
+>   closing that would require converting `vite.config.ts` to the `loadEnv()`
+>   function form, out of scope here.
 
 ## Layering
 

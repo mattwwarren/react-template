@@ -49,7 +49,7 @@ fi
 mkdir -p "${OUTPUT_DIR}"
 
 # Step 1: Copy project excluding dev artifacts
-echo -e "${GREEN}[1/6] Copying project (excluding dev artifacts)...${NC}"
+echo -e "${GREEN}[1/7] Copying project (excluding dev artifacts)...${NC}"
 
 EXCLUDE_PATTERNS=(
     ".git"
@@ -90,16 +90,32 @@ PLACEHOLDER_SLUG_UNDERSCORE="__PROJECT_SLUG_UNDERSCORE__"
 SED_SLUG='\x7B\x7B project_slug \x7D\x7D'
 SED_NAME='\x7B\x7B project_name \x7D\x7D'
 SED_SLUG_UNDERSCORE='\x7B\x7B project_slug_underscore \x7D\x7D'
+DEFAULT_PORT='5173'
+PORT_TEMPLATE='{{ port }}'
+
+# Fail loudly if an expected substitution didn't land (the source file drifted
+# away from the literal the sed targets, so the copier answer would silently
+# stop reaching generated output).
+assert_templated() {
+    local file="$1" expected="$2"
+    if ! grep -qF "${expected}" "${file}"; then
+        echo -e "${RED}ERROR: expected '${expected}' in ${file} after templating (source drifted?)${NC}"
+        exit 1
+    fi
+}
 
 # Step 2: Replace references in config files that become .jinja templates
-echo -e "${GREEN}[2/6] Templating config files (.jinja)...${NC}"
+echo -e "${GREEN}[2/7] Templating config files (.jinja)...${NC}"
 
 # Files to convert to .jinja templates
 JINJA_TEMPLATE_FILES=(
     "package.json"
     "devspace.yaml"
+    "docker/Dockerfile"
     "index.html"
     ".copier-config.json"
+    "playwright.config.ts"
+    "playwright.integration.config.ts"
 )
 
 for file in "${JINJA_TEMPLATE_FILES[@]}"; do
@@ -114,14 +130,69 @@ for file in "${JINJA_TEMPLATE_FILES[@]}"; do
         if grep -q "React Template" "${OUTPUT_DIR}/${file}" 2>/dev/null; then
             sed -i "s/React Template/${SED_NAME}/g" "${OUTPUT_DIR}/${file}"
         fi
+        if grep -q "A React frontend application" "${OUTPUT_DIR}/${file}" 2>/dev/null; then
+            sed -i 's#"description": "A React frontend application"#"description": {{ description | tojson }}#g' "${OUTPUT_DIR}/${file}"
+        fi
+        if [[ "${file}" == "devspace.yaml" ]]; then
+            # Wire k8s dev-container env defaults to the same copier answers as
+            # .env.development (ticket #14). Only the VITE_USE_MOCKS literal and
+            # the API_URL var default are templated; `value: ${API_URL}` is
+            # DevSpace runtime interpolation and API_URL keeps `source: env`,
+            # so an invocation-time env var still overrides the rendered default.
+            sed -i "s|value: \"false\"|value: \"{{ 'true' if use_mocks else 'false' }}\"|" "${OUTPUT_DIR}/${file}"
+            sed -i "s|default: \"http://fastapi-template.warren-enterprises-ltd.svc.cluster.local\"|default: \"{{ api_url }}\"|" "${OUTPUT_DIR}/${file}"
+            assert_templated "${OUTPUT_DIR}/${file}" "value: \"{{ 'true' if use_mocks else 'false' }}\""
+            assert_templated "${OUTPUT_DIR}/${file}" "default: \"{{ api_url }}\""
+        fi
+        if [[ "${file}" == "package.json" ]]; then
+            assert_templated "${OUTPUT_DIR}/${file}" "\"description\": {{ description | tojson }}"
+        fi
         # Rename to .jinja
         mv "${OUTPUT_DIR}/${file}" "${OUTPUT_DIR}/${file}.jinja"
         echo "  Templated: ${file} -> ${file}.jinja"
     fi
 done
 
-# Step 3: Replace references in TSX files with placeholders
-echo -e "${GREEN}[3/6] Adding placeholders to TSX files...${NC}"
+# Step 3: Wire non-identity copier answers into env files and vite config
+echo -e "${GREEN}[3/7] Wiring copier answers into env and vite config (.jinja)...${NC}"
+
+# .env.example MUST stay in lockstep with .env.development: _tasks.py copies it
+# to .env.development.local, which Vite loads with higher precedence, so an
+# unwired .env.example would silently override the wired .env.development.
+ENV_TEMPLATE_FILES=(
+    ".env.development"
+    ".env.example"
+)
+
+for file in "${ENV_TEMPLATE_FILES[@]}"; do
+    target="${OUTPUT_DIR}/${file}"
+    if [[ -f "${target}" ]]; then
+        sed -i \
+            -e "s|^VITE_API_URL=.*|VITE_API_URL={{ api_url }}|" \
+            -e "s|^VITE_WS_URL=.*|VITE_WS_URL={{ api_url }}|" \
+            -e "s|^VITE_USE_MOCKS=.*|VITE_USE_MOCKS={{ 'true' if use_mocks else 'false' }}|" \
+            -e "s|^VITE_AUTH_PROVIDER=.*|VITE_AUTH_PROVIDER={{ auth_provider if auth_enabled and auth_provider != 'none' else 'mock' }}|" \
+            "${target}"
+        assert_templated "${target}" "VITE_API_URL={{ api_url }}"
+        assert_templated "${target}" "VITE_WS_URL={{ api_url }}"
+        assert_templated "${target}" "VITE_USE_MOCKS={{ 'true' if use_mocks else 'false' }}"
+        assert_templated "${target}" "VITE_AUTH_PROVIDER={{ auth_provider if auth_enabled and auth_provider != 'none' else 'mock' }}"
+        mv "${target}" "${target}.jinja"
+        echo "  Templated: ${file} -> ${file}.jinja"
+    fi
+done
+
+# vite.config.ts: dev-server port only. The /api proxy target deliberately stays
+# on raw process.env (see ARCHITECTURE.md Known gap).
+if [[ -f "${OUTPUT_DIR}/vite.config.ts" ]]; then
+    sed -i "s|port: ${DEFAULT_PORT},|port: ${PORT_TEMPLATE},|" "${OUTPUT_DIR}/vite.config.ts"
+    assert_templated "${OUTPUT_DIR}/vite.config.ts" "port: ${PORT_TEMPLATE},"
+    mv "${OUTPUT_DIR}/vite.config.ts" "${OUTPUT_DIR}/vite.config.ts.jinja"
+    echo "  Templated: vite.config.ts -> vite.config.ts.jinja"
+fi
+
+# Step 4: Replace references in TSX files with placeholders
+echo -e "${GREEN}[4/7] Adding placeholders to TSX files...${NC}"
 
 UI_FILES=(
     "src/components/layout/Header.tsx"
@@ -138,8 +209,8 @@ for file in "${UI_FILES[@]}"; do
     fi
 done
 
-# Step 4: Update markdown documentation and other files
-echo -e "${GREEN}[4/6] Templating markdown and config files (.jinja)...${NC}"
+# Step 5: Update markdown documentation and other files
+echo -e "${GREEN}[5/7] Templating markdown and config files (.jinja)...${NC}"
 
 MD_COUNT=0
 for mdfile in "${OUTPUT_DIR}"/*.md; do
@@ -176,27 +247,33 @@ if [[ -d "${OUTPUT_DIR}/deployment" ]]; then
         if grep -qE "react-template|react_template" "$file" 2>/dev/null; then
             sed -i "s/react-template/${SED_SLUG}/g" "$file"
             sed -i "s/react_template/${SED_SLUG_UNDERSCORE}/g" "$file"
+            # Rename so copier renders it (_templates_suffix: ".jinja");
+            # otherwise the Jinja above ships verbatim.
+            mv "$file" "${file}.jinja"
             ((DEPLOY_COUNT++)) || true
         fi
     done < <(find "${OUTPUT_DIR}/deployment" -type f \( -name "*.yaml" -o -name "*.yml" \) -print0 2>/dev/null)
-    echo "  Updated ${DEPLOY_COUNT} files in deployment/"
+    echo "  Templated ${DEPLOY_COUNT} files in deployment/ (.jinja)"
 fi
 
-# tests/ directory - test files that reference project name
+# tests/ directory - test files that reference project name.
+# Only .ts/.js: these get real Jinja + a .jinja rename. .tsx is excluded because
+# JSX {{ }} object literals would collide with Jinja rendering.
 if [[ -d "${OUTPUT_DIR}/tests" ]]; then
     TEST_COUNT=0
     while IFS= read -r -d '' file; do
         if grep -qE "react-template|React Template" "$file" 2>/dev/null; then
             sed -i "s/react-template/${SED_SLUG}/g" "$file"
-            sed -i "s/React Template/${PLACEHOLDER_NAME}/g" "$file"
+            sed -i "s/React Template/${SED_NAME}/g" "$file"
+            mv "$file" "${file}.jinja"
             ((TEST_COUNT++)) || true
         fi
-    done < <(find "${OUTPUT_DIR}/tests" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" \) -print0 2>/dev/null)
-    echo "  Updated ${TEST_COUNT} test files"
+    done < <(find "${OUTPUT_DIR}/tests" -type f \( -name "*.ts" -o -name "*.js" \) -print0 2>/dev/null)
+    echo "  Templated ${TEST_COUNT} test files (.jinja)"
 fi
 
-# Step 5: Verify output
-echo -e "${GREEN}[5/6] Verifying output...${NC}"
+# Step 6: Verify output
+echo -e "${GREEN}[6/7] Verifying output...${NC}"
 
 # Check .jinja files exist
 JINJA_COUNT=$(find "${OUTPUT_DIR}" -name "*.jinja" | wc -l)
@@ -220,8 +297,8 @@ else
     echo -e "${RED}  ERROR: _tasks.py not found${NC}"
 fi
 
-# Step 6: Verify no remaining hardcoded references
-echo -e "${GREEN}[6/6] Checking for remaining react-template references...${NC}"
+# Step 7: Verify no remaining hardcoded references
+echo -e "${GREEN}[7/7] Checking for remaining react-template references...${NC}"
 
 # Search for remaining references in non-.jinja files (excluding expected placeholders)
 REMAINING_REFS=$(find "${OUTPUT_DIR}" -type f \
