@@ -8,7 +8,7 @@
  * native globals before jsdom populates the sandbox and restoring them after
  * is the only mechanism that satisfies the brand check; substituting classes
  * from `node:buffer` or the `undici` npm package does not (verified on Vitest
- * 4 / Node 24, see react-template#23).
+ * 4 / Node 24, see issue #23).
  *
  * Applied project-wide via vitest.config.ts `test.environment`; per-file
  * pragmas cannot reference a path in Vitest 4. A change to a shared test
