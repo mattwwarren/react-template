@@ -65,7 +65,11 @@
       "!**/test-results",
       "!**/public/mockServiceWorker.js",
       "!**/src/api/generated",
-      "!**/*.css"
+      "!**/*.css",
+      "!**/.claude/prep-pr-state.json*",
+      "!**/.claude/review-verdict.json",
+      "!**/.claude/review-verdict.md",
+      "!**/.cw/tmp-sentinel.json"
     ]
   }
 }
