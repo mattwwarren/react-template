@@ -22,11 +22,15 @@ test("exempt prefixes are skipped", () => {
 test("tailwind arbitrary values: colours, font sizes, z-index", () => {
   assert.match(check("src/a.tsx", '<div className="text-[#fff]" />')[0], /raw colour in the class "text-\[#fff\]"/);
   assert.match(check("src/a.tsx", '<div className="hover:bg-[rgb(1,2,3)]" />')[0], /raw colour/);
+  assert.match(check("src/a.tsx", '<div className="bg-[red]" />')[0], /raw colour in the class "bg-\[red\]"/);
   assert.match(check("src/a.tsx", '<div className="text-[13px]" />')[0], /raw font size/);
   assert.match(check("src/a.tsx", '<div className="z-[999]" />')[0], /raw z-index/);
 });
 test("tailwind arbitrary values that reference tokens or are not design values pass", () => {
-  assert.deepEqual(check("src/a.tsx", '<div className="bg-[var(--brand)] data-[state=open]:bg-primary w-[37px]" />'), []);
+  assert.deepEqual(
+    check("src/a.tsx", '<div className="bg-[var(--brand)] bg-[transparent] text-[currentColor] data-[state=open]:bg-primary w-[37px]" />'),
+    [],
+  );
 });
 test("class scanning can be switched off", () => {
   assert.deepEqual(check("src/a.tsx", '<div className="text-[#fff]" />', { scanTailwindClasses: false }), []);
@@ -44,6 +48,7 @@ test("JSX style prop: geometry and custom properties pass, anything else is flag
   assert.deepEqual(check("src/a.tsx", "<div style={{ left: x, width: 10, transform: t }} />"), []);
   assert.deepEqual(check("src/a.tsx", '<div style={{ "--w": w, height }} />'), []);
   assert.match(check("src/a.tsx", '<div style={{ color: "red" }} />')[0], /inline style property "color"/);
+  assert.match(check("src/a.tsx", '<div style = {{ color: "red" }} />')[0], /inline style property "color"/);
 });
 test("JSX style prop: indirect objects and spreads cannot be checked", () => {
   assert.match(check("src/a.tsx", "<div style={styles} />")[0], /not an object literal/);

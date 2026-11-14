@@ -1,12 +1,13 @@
 // Token rules for TS/TSX/JS sources: Tailwind utility classes held in strings, and the JSX style prop.
-// Known gaps: named colours inside arbitrary values (bg-[red]), classes assembled from fragments at run
-// time, `style = {…}` written with spaces, and style objects built elsewhere and passed in.
+// Known gaps: classes assembled from fragments at run time, and style objects built elsewhere and passed in.
 const HEX = /#[0-9a-fA-F]{3,8}\b/;
 const COLOUR_FN = /\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(/i;
+const NAMED_COLOUR = /^(?:aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|rebeccapurple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen)$/i;
+const COLOUR_UTILITY = /^(?:bg|text|border|ring|fill|stroke|from|via|to|outline|divide|decoration|accent|caret|shadow)$/;
 const ARBITRARY = /(?<![\w-])(?:[\w-]+:)*(-?[a-z][a-z0-9]*(?:-[a-z0-9]+)*)-\[([^\]\s]+)\]/g;
 const PALETTE =
   /(?<![\w-])(?:[\w-]+:)*(?:bg|text|border|ring|fill|stroke|from|via|to|outline|divide|decoration|accent|caret|shadow)-(?:(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}|black|white)(?![\w-])/g;
-const STYLE_PROP = /\bstyle=\{(\s*)(\{)?/g;
+const STYLE_PROP = /\bstyle\s*=\s*\{(\s*)(\{)?/g;
 
 export const USE_TOKEN_CLASS =
   "use a semantic token class (e.g. bg-primary, text-muted-foreground) or add a token to the theme file";
@@ -20,7 +21,8 @@ function arbitraryProblems({ start, text }) {
     const name = m[1].replace(/^-/, "");
     const value = m[2].replace(/var\(\s*--[\w-]+/g, "var(");
     const at = start + m.index;
-    if (HEX.test(value) || COLOUR_FN.test(value)) out.push([at, `raw colour in the class "${m[0]}"`, USE_TOKEN_CLASS]);
+    if (HEX.test(value) || COLOUR_FN.test(value) || (COLOUR_UTILITY.test(name) && NAMED_COLOUR.test(value)))
+      out.push([at, `raw colour in the class "${m[0]}"`, USE_TOKEN_CLASS]);
     else if (name === "text" && /^\d+(?:\.\d+)?(?:px|rem|em)$/.test(value))
       out.push([at, `raw font size in the class "${m[0]}"`, USE_TOKEN_CLASS]);
     else if (name === "z" && /^-?\d+$/.test(value)) out.push([at, `raw z-index in the class "${m[0]}"`, USE_TOKEN_CLASS]);
