@@ -195,7 +195,11 @@ test.describe('Users', () => {
   })
 
   test('can cancel delete operation', async ({ page }) => {
-    await page.goto('/users')
+    // Pair the navigation with the users list request, so the table wait starts from the data load
+    const usersLoaded = page.waitForResponse(
+      (response) => response.request().method() === 'GET' && /\/users(\?|$)/.test(response.url())
+    )
+    await Promise.all([usersLoaded, page.goto('/users')])
 
     // Wait for data to load
     await expect(page.getByRole('table')).toBeVisible()
