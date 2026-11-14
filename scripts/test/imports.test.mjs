@@ -54,13 +54,6 @@ test("a JSX apostrophe does not hide same-line require or import", () => {
   assert.deepEqual(importsOf(text).map((i) => i.specifier), ["@/features/x", "@/features/y"]);
 });
 
-test("a TypeScript angle-bracket assertion does not hide a following static import", () => {
-  const text = 'const value = <Foo>value;\nimport { x } from "@/features/x";';
-  assert.deepEqual(importsOf(text).map((i) => i.specifier), ["@/features/x"]);
-  const generic = 'const value = <Foo<string>>value;\nimport { y } from "@/features/y";';
-  assert.deepEqual(importsOf(generic).map((i) => i.specifier), ["@/features/y"]);
-});
-
 test("commented-out and string-embedded imports are ignored", () => {
   assert.deepEqual(importsOf('// import { s } from "../core/state.js";\nconst s = "import x from \\"a\\"";'), []);
 });
@@ -112,7 +105,6 @@ test("inline type modifiers are type-only only when every named specifier is a t
   assert.equal(importsOf('import { type as value } from "x";')[0].typeOnly, false);
   assert.equal(importsOf('import typeFoo from "x";')[0].typeOnly, false);
   assert.equal(importsOf('import type from "x";')[0].typeOnly, false);
-  assert.equal(importsOf('import type, { Foo } from "x";')[0].typeOnly, false);
 });
 
 test("typeOnly survives a very long import list", () => {

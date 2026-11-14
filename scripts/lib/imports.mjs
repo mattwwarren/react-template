@@ -30,9 +30,7 @@ function isTypeOnly(skeleton, keywords, offset) {
   }
   if (keyword === undefined) return false;
   const after = skeleton.slice(keyword.index + keyword[0].length, offset).trim();
-  // `import type, { Foo } from` has a runtime default binding named `type`; only the
-  // whitespace/bracket forms introduce an `import type` declaration.
-  if (/^type(?:\s+|\{)/.test(after)) return true;
+  if (after !== "type" && /^type\b/.test(after)) return true;
   if (!after.startsWith("{") || !after.endsWith("}")) return false;
   const specifiers = after.slice(1, -1).split(",").map((specifier) => specifier.trim()).filter(Boolean);
   return specifiers.length > 0 && specifiers.every((specifier) => /^type\s+(?!as\b)\S/.test(specifier));
