@@ -167,12 +167,14 @@ npm run test:coverage
 npm run test:e2e
 ```
 
+`scripts/ci-local.sh` is the merge gate that CI also runs: lint, structure gates (no suppressions, file size, layering, import cycles), build, unit and e2e tests. The size and import-cycle gates compare against the merge base, so they need an `origin` remote with `main` pushed.
+
 ---
 
 ## Code Quality
 
 ```bash
-# ESLint
+# Lint + format check (Biome)
 npm run lint
 
 # TypeScript type check
