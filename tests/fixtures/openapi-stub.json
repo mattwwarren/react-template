@@ -1,0 +1,179 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Stub API",
+    "version": "0.0.0",
+    "description": "Minimal schema stub for CI and clean clones, used only when src/api/generated/types.ts is absent. Real types come from the backend spec via npm run generate:types."
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "MembershipRole": { "type": "string", "enum": ["owner", "admin", "member"] },
+      "UserInfo": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string" },
+          "name": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "email", "name", "created_at", "updated_at"]
+      },
+      "OrganizationInfo": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "name", "created_at", "updated_at"]
+      },
+      "UserRead": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "name": { "type": "string", "minLength": 1 },
+          "kratos_identity_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }]
+          },
+          "id": { "type": "string", "format": "uuid" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "organizations": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/OrganizationInfo" }
+          }
+        },
+        "required": ["email", "name", "id", "created_at", "updated_at"]
+      },
+      "UserCreate": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "name": { "type": "string", "minLength": 1 },
+          "kratos_identity_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }]
+          }
+        },
+        "required": ["email", "name"]
+      },
+      "UserUpdate": {
+        "type": "object",
+        "properties": {
+          "email": { "anyOf": [{ "type": "string", "format": "email" }, { "type": "null" }] },
+          "name": { "anyOf": [{ "type": "string" }, { "type": "null" }] }
+        }
+      },
+      "OrganizationRead": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "id": { "type": "string", "format": "uuid" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "users": { "type": "array", "items": { "$ref": "#/components/schemas/UserInfo" } }
+        },
+        "required": ["name", "id", "created_at", "updated_at"]
+      },
+      "OrganizationCreate": {
+        "type": "object",
+        "properties": { "name": { "type": "string" } },
+        "required": ["name"]
+      },
+      "OrganizationUpdate": {
+        "type": "object",
+        "properties": { "name": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }
+      },
+      "MembershipRead": {
+        "type": "object",
+        "properties": {
+          "user_id": { "type": "string", "format": "uuid" },
+          "organization_id": { "type": "string", "format": "uuid" },
+          "role": { "$ref": "#/components/schemas/MembershipRole", "default": "member" },
+          "id": { "type": "string", "format": "uuid" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["user_id", "organization_id", "id", "created_at", "updated_at"]
+      },
+      "MembershipCreate": {
+        "type": "object",
+        "properties": {
+          "user_id": { "type": "string", "format": "uuid" },
+          "organization_id": { "type": "string", "format": "uuid" },
+          "role": { "$ref": "#/components/schemas/MembershipRole", "default": "member" }
+        },
+        "required": ["user_id", "organization_id"]
+      },
+      "MembershipUpdate": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "anyOf": [{ "$ref": "#/components/schemas/MembershipRole" }, { "type": "null" }]
+          }
+        }
+      },
+      "DocumentRead": {
+        "type": "object",
+        "properties": {
+          "filename": { "type": "string" },
+          "content_type": { "type": "string" },
+          "file_size": { "type": "integer" },
+          "organization_id": { "type": "string", "format": "uuid" },
+          "id": { "type": "string", "format": "uuid" },
+          "storage_url": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        },
+        "required": [
+          "filename",
+          "content_type",
+          "file_size",
+          "organization_id",
+          "id",
+          "storage_url",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "Page_UserRead_": {
+        "type": "object",
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/UserRead" } },
+          "total": { "type": "integer", "minimum": 0 },
+          "page": { "type": "integer", "minimum": 1 },
+          "size": { "type": "integer", "minimum": 1 },
+          "pages": { "type": "integer", "minimum": 0 }
+        },
+        "required": ["items", "total", "page", "size", "pages"]
+      },
+      "Page_OrganizationRead_": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/OrganizationRead" }
+          },
+          "total": { "type": "integer", "minimum": 0 },
+          "page": { "type": "integer", "minimum": 1 },
+          "size": { "type": "integer", "minimum": 1 },
+          "pages": { "type": "integer", "minimum": 0 }
+        },
+        "required": ["items", "total", "page", "size", "pages"]
+      },
+      "Page_MembershipRead_": {
+        "type": "object",
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/MembershipRead" } },
+          "total": { "type": "integer", "minimum": 0 },
+          "page": { "type": "integer", "minimum": 1 },
+          "size": { "type": "integer", "minimum": 1 },
+          "pages": { "type": "integer", "minimum": 0 }
+        },
+        "required": ["items", "total", "page", "size", "pages"]
+      }
+    }
+  }
+}

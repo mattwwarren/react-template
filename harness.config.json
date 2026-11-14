@@ -1,0 +1,62 @@
+{
+  "baseRef": "origin/main",
+  "imports": {
+    "sourceGlobs": ["src/*.ts", "src/*.tsx"],
+    "aliases": {
+      "@/": "src/"
+    },
+    "external": "allow"
+  },
+  "layering": {
+    "layers": [
+      {
+        "name": "lib",
+        "dirs": ["src/lib/"]
+      },
+      {
+        "name": "auth",
+        "dirs": ["src/auth/"]
+      },
+      {
+        "name": "realtime",
+        "dirs": ["src/realtime/"]
+      },
+      {
+        "name": "api",
+        "dirs": ["src/api/"]
+      },
+      {
+        "name": "hooks",
+        "dirs": ["src/hooks/"]
+      },
+      {
+        "name": "components",
+        "dirs": ["src/components/"]
+      },
+      {
+        "name": "features",
+        "dirs": ["src/features/"]
+      }
+    ],
+    "entry": ["src/main.tsx"],
+    "unlayered": "deny",
+    "ignoreImporters": ["__tests__/", ".test.", ".spec.", "src/test/", "src/mocks/"]
+  },
+  "cycles": {
+    "scopePrefixes": ["src/"]
+  },
+  "tokens": {
+    "tokenFiles": ["src/index.css"],
+    "scopePrefixes": ["src/"],
+    "exemptPrefixes": ["src/components/ui/", "src/api/generated/", "src/mocks/", "src/test/"],
+    "scanTailwindClasses": true,
+    "forbidPaletteClasses": false
+  },
+  "axe": {
+    "allowlist": "tests/e2e/axe-allowlist.json"
+  },
+  "suppressions": {
+    "excludePrefixes": ["public/mockServiceWorker.js"]
+  },
+  "tier": "t1"
+}

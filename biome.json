@@ -69,7 +69,8 @@
       "!**/.claude/prep-pr-state.json*",
       "!**/.claude/review-verdict.json",
       "!**/.claude/review-verdict.md",
-      "!**/.cw/tmp"
+      "!**/.cw/tmp",
+      "!scripts/**/*.mjs"
     ]
   }
 }
