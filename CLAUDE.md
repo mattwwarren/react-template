@@ -210,7 +210,7 @@ export function ProtectedRoute() {
 - Specs import `test` and `expect` from `tests/e2e/utils/fixtures`; the `signedIn` fixture is auto and signs in through the real Sign in form
 - `E2E_PORT=<free port> npm run test:e2e` runs on a free port (default 5173, `--strictPort`, never reuses an existing server)
 - `CI=1 npm run test:e2e` is the CI-equivalent run (3 browsers, retries 2, 1 worker)
-- `tests/e2e/global-setup.ts` warms the Vite dev server before workers start; without it a cold dependency cache reloads the page mid-test
+- There is no Vite warm-up step. On a cold dependency cache (no `node_modules/.vite`) Vite's optimizer can reload the page mid-test, so a first local run (0 retries) can fail sign-in; re-run, or use `CI=1` (retries 2)
 
 ## Environment Variables
 
