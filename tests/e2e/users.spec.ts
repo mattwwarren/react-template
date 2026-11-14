@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test'
 import { DIALOG_TIMEOUT } from './utils/constants'
+import { expect, test } from './utils/fixtures'
 
 test.describe('Users', () => {
   test('displays users list', async ({ page }) => {
@@ -166,9 +166,6 @@ test.describe('Users', () => {
     await expect(page.getByRole('table')).toBeVisible()
     await page.waitForSelector('table tbody tr')
 
-    // Count initial rows
-    const initialRowCount = await page.locator('table tbody tr').count()
-
     // Get the first user's name before deleting
     const firstRow = page.locator('table tbody tr').first()
     const userToDelete = await firstRow.locator('a').first().textContent()
@@ -190,12 +187,11 @@ test.describe('Users', () => {
     // Dialog should close
     await expect(page.getByRole('alertdialog')).not.toBeVisible({ timeout: DIALOG_TIMEOUT })
 
-    // User should be removed from the list
-    const newRowCount = await page.locator('table tbody tr').count()
-    expect(newRowCount).toBe(initialRowCount - 1)
+    // The deleted user's name should no longer appear (retrying assertion, not a one-shot count)
+    await expect(page.getByRole('link', { name: userToDelete as string })).toHaveCount(0)
 
-    // The deleted user's name should no longer appear
-    await expect(page.getByRole('link', { name: userToDelete as string })).not.toBeVisible()
+    // Total drops by one: the mock dataset has 25 users, so 24 remain after the delete
+    await expect(page.getByText(/of 24 results/i)).toBeVisible()
   })
 
   test('can cancel delete operation', async ({ page }) => {

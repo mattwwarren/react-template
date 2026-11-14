@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './utils/fixtures'
 
 test.describe('Navigation', () => {
   test('loads dashboard by default', async ({ page }) => {
