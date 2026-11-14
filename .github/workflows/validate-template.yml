@@ -149,7 +149,9 @@ jobs:
       # false-positive on JSX {{ }} object literals and Actions ${{ }} syntax.
       - name: Check no unrendered template markers in fixed paths
         run: |
-          if grep -rnE '\{\{|\{%|__PROJECT_(NAME|SLUG|SLUG_UNDERSCORE)__' \
+          # --exclude=axe.mjs: the installer-managed helper's JSDoc `{{ within?: string }}`
+          # is a TS type, not a Copier marker; the helper ships verbatim and is never edited.
+          if grep -rnE --exclude=axe.mjs '\{\{|\{%|__PROJECT_(NAME|SLUG|SLUG_UNDERSCORE)__' \
             /tmp/test-project/.env.development \
             /tmp/test-project/.env.example \
             /tmp/test-project/vite.config.ts \
