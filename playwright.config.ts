@@ -14,9 +14,6 @@ export default defineConfig({
   // Directory containing test files
   testDir: './tests/e2e',
 
-  // Warms the Vite dev server (dependency pre-bundling) before workers start
-  globalSetup: './tests/e2e/global-setup.ts',
-
   // Run tests in parallel
   fullyParallel: true,
 
