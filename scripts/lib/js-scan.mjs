@@ -113,12 +113,34 @@ export function scanJs(text) {
     if (next === undefined || !/[A-Za-z]/.test(next)) return false;
     const before = text.slice(0, i).trimEnd();
     const previous = before.at(-1) ?? "";
+    if (looksLikeTypeAssertion(i)) return false;
     return (
       i === 0 ||
       /[=(:,[!&|?{;]/.test(previous) ||
       previous === ">" ||
       /\b(?:return|throw)\s*$/.test(before)
     );
+  }
+
+  // `<Type>value` is valid TypeScript, but looks exactly like an opening JSX tag to a
+  // character scanner. A statement boundary before a matching JSX close tag identifies
+  // the assertion form without treating normal JSX text as code.
+  function looksLikeTypeAssertion(i) {
+    let depth = 1;
+    let typeEnd = i + 1;
+    for (; typeEnd < n; typeEnd++) {
+      if (text[typeEnd] === "<") depth++;
+      else if (text[typeEnd] === ">" && --depth === 0) break;
+    }
+    if (typeEnd >= n) return false;
+    const type = text.slice(i + 1, typeEnd).trim();
+    if (!/^[A-Za-z_$][\w$]*(?:[\w$ .<>,\[\]|&:?])*$/.test(type)) return false;
+    const tag = /^([A-Za-z][\w.$:-]*)/.exec(type)?.[1];
+    if (tag === undefined) return false;
+    const closeTag = text.indexOf(`</${tag}>`, typeEnd + 1);
+    const boundary = /(?:;|\n)\s*(?:import|export)\b/.exec(text.slice(typeEnd + 1));
+    const boundaryOffset = boundary === null ? -1 : typeEnd + 1 + boundary.index;
+    return boundary !== null && (closeTag < 0 || boundaryOffset < closeTag);
   }
 
   /** Scan code from i. With stopAtBrace, return the offset of the `}` that closes the enclosing ${ … }. */
