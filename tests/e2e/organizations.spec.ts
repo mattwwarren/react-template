@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test'
 import { DIALOG_TIMEOUT } from './utils/constants'
+import { expect, test } from './utils/fixtures'
 
 test.describe('Organizations', () => {
   test('displays organizations list', async ({ page }) => {

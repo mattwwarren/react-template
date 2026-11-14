@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw'
 import { z } from 'zod'
 import { type AuthUser, DEFAULT_USER } from '@/auth/providers/mock'
+import { apiUrl } from './utils'
 
 // Validation schema for login
 const LoginSchema = z.object({
@@ -12,7 +13,7 @@ let currentUser: AuthUser | null = null
 
 export const authHandlers = [
   // Get current session
-  http.get('*/auth/session', () => {
+  http.get(apiUrl('/auth/session'), () => {
     if (!currentUser) {
       return new HttpResponse(null, { status: 401 })
     }
@@ -20,7 +21,7 @@ export const authHandlers = [
   }),
 
   // Login
-  http.post('*/auth/login', async ({ request }) => {
+  http.post(apiUrl('/auth/login'), async ({ request }) => {
     const body = await request.json()
     const result = LoginSchema.safeParse(body)
 
@@ -48,7 +49,7 @@ export const authHandlers = [
   }),
 
   // Logout
-  http.post('*/auth/logout', () => {
+  http.post(apiUrl('/auth/logout'), () => {
     currentUser = null
     return new HttpResponse(null, { status: 204 })
   }),

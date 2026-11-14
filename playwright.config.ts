@@ -3,7 +3,13 @@ import { defineConfig, devices } from '@playwright/test'
 /**
  * Playwright configuration for E2E tests.
  * @see https://playwright.dev/docs/test-configuration
+ *
+ * E2E_PORT overrides the dev-server port (default 5173). Set it to a free port
+ * when 5173 is busy; a port set this way never reuses an existing server.
  */
+const PORT = Number(process.env.E2E_PORT ?? 5173)
+const BASE_URL = `http://localhost:${PORT}`
+
 export default defineConfig({
   // Directory containing test files
   testDir: './tests/e2e',
@@ -26,7 +32,7 @@ export default defineConfig({
   // Shared settings for all projects
   use: {
     // Base URL to use in actions like `await page.goto('/')`
-    baseURL: 'http://localhost:5173',
+    baseURL: BASE_URL,
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -58,9 +64,9 @@ export default defineConfig({
 
   // Run dev server before starting the tests
   webServer: {
-    command: 'npm run dev:mock',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    command: `npm run dev:mock -- --port ${PORT} --strictPort`,
+    url: BASE_URL,
+    reuseExistingServer: !process.env.CI && !process.env.E2E_PORT,
     timeout: 120 * 1000, // 2 minutes to start
   },
 })

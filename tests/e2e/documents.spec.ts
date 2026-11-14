@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './utils/fixtures'
 
 test.describe('Documents', () => {
   test('displays documents page', async ({ page }) => {
@@ -25,16 +25,17 @@ test.describe('Documents', () => {
     await page.getByRole('button', { name: /upload document/i }).click()
 
     // Dialog should open
-    await expect(page.getByRole('dialog')).toBeVisible()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
 
     // Dialog should have title
-    await expect(page.getByText(/upload document/i)).toBeVisible()
+    await expect(dialog.getByRole('heading', { name: 'Upload Document' })).toBeVisible()
 
     // Organization selector should be present
-    await expect(page.getByText(/organization/i)).toBeVisible()
+    await expect(dialog.getByLabel('Organization')).toBeVisible()
 
     // File input should be present
-    await expect(page.getByText(/file/i)).toBeVisible()
+    await expect(dialog.getByLabel('File')).toBeVisible()
   })
 
   test('can close upload dialog', async ({ page }) => {
