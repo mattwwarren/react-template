@@ -1,5 +1,4 @@
-/* eslint-disable react-refresh/only-export-components */
-// This file exports both factory functions and components, which is expected for auth providers
+// Exports only non-component functions (createAuth0Provider, resetAuth0); the wrapper and bridge components are module-private.
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import type { AuthProviderImplementation, AuthState, AuthUser } from '../types'
 

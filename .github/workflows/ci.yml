@@ -1,0 +1,35 @@
+# ci.yml - The merge gate.
+#
+# Runs scripts/ci-local.sh, the same script developers run locally, so local
+# and CI cannot drift. The size and import-cycle gates compare their ratchet
+# files with the merge base against origin/main, so the checkout must carry
+# full history (fetch-depth: 0); a shallow clone makes those gates exit 2.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # npm ci first so npx resolves the lockfile-pinned Playwright CLI.
+      - name: Install Playwright browsers
+        run: npm ci && npx playwright install --with-deps
+
+      - name: Merge gate
+        run: scripts/ci-local.sh

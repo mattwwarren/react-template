@@ -85,7 +85,6 @@ export function OrganizationPicker({
       autoSelectedRef.current = true
       onSelect(firstOrg.id)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgs, onSelect]) // autoSelectedRef intentionally omitted (stable ref)
 
   if (isLoading) {
