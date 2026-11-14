@@ -32,6 +32,7 @@ run 'no suppression comments' scripts/check-no-suppressions.sh
 run 'size budget (shrink-only ratchet)' node scripts/check-size-budget.mjs
 run layering node scripts/check-layering.mjs
 run 'import cycles (shrink-only ratchet)' node scripts/check-import-cycles.mjs
+run 'design tokens (raw values only in the token file)' node scripts/check-design-tokens.mjs
 run 'harness gate tests' node scripts/run-harness-tests.mjs
 
 # --- project steps ---

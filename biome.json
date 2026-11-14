@@ -70,7 +70,8 @@
       "!**/.claude/review-verdict.json",
       "!**/.claude/review-verdict.md",
       "!.cw",
-      "!scripts/**/*.mjs"
+      "!scripts/**/*.mjs",
+      "!tests/e2e/support/axe.mjs"
     ]
   }
 }

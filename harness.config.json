@@ -48,9 +48,9 @@
   "tokens": {
     "tokenFiles": ["src/index.css"],
     "scopePrefixes": ["src/"],
-    "exemptPrefixes": ["src/components/ui/", "src/api/generated/", "src/mocks/", "src/test/"],
+    "exemptPrefixes": ["src/components/ui/", "src/api/generated/"],
     "scanTailwindClasses": true,
-    "forbidPaletteClasses": false
+    "forbidPaletteClasses": true
   },
   "axe": {
     "allowlist": "tests/e2e/axe-allowlist.json"
@@ -58,5 +58,5 @@
   "suppressions": {
     "excludePrefixes": ["public/mockServiceWorker.js"]
   },
-  "tier": "t1"
+  "tier": "t2"
 }
