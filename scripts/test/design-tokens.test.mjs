@@ -20,9 +20,34 @@ test("exempt prefixes are skipped", () => {
   assert.deepEqual(check("src/components/ui/button.tsx", 'const c = "bg-[#fff]";'), []);
 });
 test("tailwind arbitrary values: colours, font sizes, z-index", () => {
-  assert.match(check("src/a.tsx", '<div className="text-[#fff]" />')[0], /raw colour in the class "text-\[#fff\]"/);
+  const colourUtilities = [
+    "bg",
+    "text",
+    "border",
+    "ring",
+    "ring-offset",
+    "fill",
+    "stroke",
+    "from",
+    "via",
+    "to",
+    "outline",
+    "divide",
+    "decoration",
+    "accent",
+    "caret",
+    "shadow",
+    "placeholder",
+  ];
+  const colourViolations = check(
+    "src/a.tsx",
+    `<div className="${colourUtilities.map((utility) => `${utility}-[red]`).join(" ")}" />`,
+  );
+  assert.equal(colourViolations.length, colourUtilities.length);
+  for (const utility of colourUtilities)
+    assert.ok(colourViolations.some((v) => v.includes(`raw colour in the class "${utility}-[red]"`)));
+  assert.match(check("src/a.tsx", '<div className="text-[#fff]" />')[0], /raw colour/);
   assert.match(check("src/a.tsx", '<div className="hover:bg-[rgb(1,2,3)]" />')[0], /raw colour/);
-  assert.match(check("src/a.tsx", '<div className="bg-[red]" />')[0], /raw colour in the class "bg-\[red\]"/);
   assert.match(check("src/a.tsx", '<div className="text-[13px]" />')[0], /raw font size/);
   assert.match(check("src/a.tsx", '<div className="z-[999]" />')[0], /raw z-index/);
 });
