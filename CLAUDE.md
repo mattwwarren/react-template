@@ -138,13 +138,14 @@ Mock API responses for development and testing. Handlers support full CRUD with 
 ```typescript
 import { http, HttpResponse } from 'msw';
 import { mockUsers, createUser } from '../factories';
+import { apiUrl } from './utils';
 
 // Mutable copy for CRUD operations
 let users = [...mockUsers];
 
 export const userHandlers = [
   // List (paginated)
-  http.get('*/users', ({ request }) => {
+  http.get(apiUrl('/users'), ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1');
     const size = parseInt(url.searchParams.get('size') || '10');
@@ -160,7 +161,7 @@ export const userHandlers = [
   }),
 
   // Create
-  http.post('*/users', async ({ request }) => {
+  http.post(apiUrl('/users'), async ({ request }) => {
     const body = await request.json();
     const user = createUser({ ...body });
     users.push(user);
@@ -168,6 +169,8 @@ export const userHandlers = [
   }),
 ];
 ```
+
+Anchor every handler path with `apiUrl('/…')` (from `./utils`), which resolves against `API_BASE_URL`. Do not use a leading-wildcard `'*/…'` path: it also matches Vite module requests such as `/src/features/users/UsersPage.tsx`, and an unknown id then returns 404 where the lazy import needs the module.
 
 ### Protected Routes
 
@@ -204,6 +207,10 @@ export function ProtectedRoute() {
 - Run against `dev:mock` for consistency
 - Test critical user flows (CRUD, navigation, auth)
 - Use page object pattern for complex pages
+- Specs import `test` and `expect` from `tests/e2e/utils/fixtures`; the `signedIn` fixture is auto and signs in through the real Sign in form
+- `E2E_PORT=<free port> npm run test:e2e` runs on a free port (default 5173, `--strictPort`, never reuses an existing server)
+- `CI=1 npm run test:e2e` is the CI-equivalent run (3 browsers, retries 2, 1 worker)
+- `tests/e2e/global-setup.ts` warms the Vite dev server before workers start; without it a cold dependency cache reloads the page mid-test
 
 ## Environment Variables
 
