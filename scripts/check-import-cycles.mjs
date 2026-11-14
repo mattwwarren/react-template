@@ -8,9 +8,10 @@ import { configProblems } from "./lib/config-ratchet.mjs";
 import { cannotRun, readJsonAtMergeBase, readTree } from "./lib/git-files.mjs";
 import { cycleProblems, cycleRatchet, cycles, featureGraph } from "./lib/import-cycles.mjs";
 import { ratchetRegressions } from "./lib/ratchet.mjs";
-import { IMPORT_CYCLES_RATCHET_PATH, readRatchetFile } from "./lib/ratchet-file.mjs";
+import { readRatchetFile } from "./lib/ratchet-file.mjs";
 import { runGate } from "./lib/run-gate.mjs";
 
+const RATCHET = "scripts/import-cycles.json";
 process.chdir(join(dirname(fileURLToPath(import.meta.url)), ".."));
 
 const config = requireConfig();
@@ -33,13 +34,13 @@ if (process.argv.includes("--list")) {
   process.exit(0);
 }
 
-const recorded = readRatchetFile(IMPORT_CYCLES_RATCHET_PATH);
+const recorded = readRatchetFile(RATCHET);
 
 runGate({
   heading: "Import cycle violations",
   problems: [
     ...configProblems(config),
-    ...ratchetRegressions(readJsonAtMergeBase(IMPORT_CYCLES_RATCHET_PATH, config.baseRef), recorded),
+    ...ratchetRegressions(readJsonAtMergeBase(RATCHET, config.baseRef), recorded),
     ...cycleProblems(cycleRatchet(found), recorded),
   ],
   ok:

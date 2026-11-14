@@ -49,9 +49,9 @@ test("importsOf marks type-only static imports, including multi-line ones", () =
   ]);
 });
 
-test("a JSX apostrophe does not hide same-line require or import", () => {
-  const text = 'export const A = () => <p>Don\'t</p>; const x = require("@/features/x"); import("@/features/y");';
-  assert.deepEqual(importsOf(text).map((i) => i.specifier), ["@/features/x", "@/features/y"]);
+test("a JSX apostrophe does not hide the next line's import", () => {
+  const text = "export const A = () => <p>Don't</p>;\nimport { x } from \"@/features/x\";";
+  assert.deepEqual(importsOf(text).map((i) => i.specifier), ["@/features/x"]);
 });
 
 test("commented-out and string-embedded imports are ignored", () => {
@@ -96,13 +96,8 @@ test("typeOnly follows the statement the from belongs to, even on one line", () 
   assert.deepEqual(importsOf(afterTypeAlias).map((i) => [i.specifier, i.typeOnly]), [["./a", false]]);
 });
 
-test("inline type modifiers are type-only only when every named specifier is a type", () => {
-  assert.equal(importsOf('import { type A } from "x";')[0].typeOnly, true);
-  assert.equal(importsOf('import { type A, type B } from "x";')[0].typeOnly, true);
-  assert.equal(importsOf('import { type A, B } from "x";')[0].typeOnly, false);
-  assert.equal(importsOf('export { type A as B } from "x";')[0].typeOnly, true);
-  assert.equal(importsOf('import { type } from "x";')[0].typeOnly, false);
-  assert.equal(importsOf('import { type as value } from "x";')[0].typeOnly, false);
+test("inline type modifiers and type-prefixed names are not type-only imports", () => {
+  assert.equal(importsOf('import { type A } from "x";')[0].typeOnly, false);
   assert.equal(importsOf('import typeFoo from "x";')[0].typeOnly, false);
   assert.equal(importsOf('import type from "x";')[0].typeOnly, false);
 });

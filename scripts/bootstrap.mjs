@@ -12,7 +12,6 @@ import { fileURLToPath } from "node:url";
 import { requireConfig } from "./lib/config.mjs";
 import { cannotRun, readTree } from "./lib/git-files.mjs";
 import { cycleRatchet, cycles, featureGraph } from "./lib/import-cycles.mjs";
-import { IMPORT_CYCLES_RATCHET_PATH, SIZE_RATCHET_PATH } from "./lib/ratchet-file.mjs";
 import { overBudget, sizedFiles } from "./lib/tree-lines.mjs";
 
 process.chdir(join(dirname(fileURLToPath(import.meta.url)), ".."));
@@ -54,11 +53,11 @@ function measureCycles() {
 const sizeRatchet = measureSize();
 const cycleRecord = measureCycles();
 
-create(SIZE_RATCHET_PATH, sizeRatchet);
+create("scripts/size-budget.json", sizeRatchet);
 if (cycleRecord === null)
   console.log(
-    `skipped ${IMPORT_CYCLES_RATCHET_PATH} (cycles gate not configured: set cycles.scopePrefixes and imports.sourceGlobs, then rerun)`,
+    "skipped scripts/import-cycles.json (cycles gate not configured: set cycles.scopePrefixes and imports.sourceGlobs, then rerun)",
   );
-else create(IMPORT_CYCLES_RATCHET_PATH, cycleRecord);
+else create("scripts/import-cycles.json", cycleRecord);
 
 if (config.tier === "t2") create(config.axe.allowlist, []);
