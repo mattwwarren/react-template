@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { cannotRun } from "./git-files.mjs";
 
+export const SIZE_RATCHET_PATH = "scripts/size-budget.json";
+export const IMPORT_CYCLES_RATCHET_PATH = "scripts/import-cycles.json";
+
 /**
  * Reads a ratchet file (a JSON object of name -> positive integer) from the working tree.
  * Fails closed (exit 2) when it cannot be read or parsed, or is not a plain object whose values

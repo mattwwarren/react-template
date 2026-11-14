@@ -107,13 +107,61 @@ export function scanJs(text) {
     return i + 1; // not a regex after all: treat the slash as an operator
   }
 
+  function startsJsxTag(i) {
+    const next = text[i + 1];
+    if (next === ">" || next === "/") return true;
+    if (next === undefined || !/[A-Za-z]/.test(next)) return false;
+    const before = text.slice(0, i).trimEnd();
+    const previous = before.at(-1) ?? "";
+    return (
+      i === 0 ||
+      /[=(:,[!&|?{;]/.test(previous) ||
+      previous === ">" ||
+      /\b(?:return|throw)\s*$/.test(before)
+    );
+  }
+
   /** Scan code from i. With stopAtBrace, return the offset of the `}` that closes the enclosing ${ … }. */
   function scanCode(i, stopAtBrace) {
     let depth = 0;
+    let jsxDepth = 0;
+    let jsxText = false;
+    let jsxTag = false;
+    let closingJsxTag = false;
     while (i < n) {
       const c = text[i];
       const d = text[i + 1];
-      if (c === "/" && d === "/") {
+      if (jsxText) {
+        if (c === "<") {
+          jsxText = false;
+          jsxTag = true;
+          closingJsxTag = d === "/";
+          i++;
+        } else if (c === "{") {
+          jsxText = false;
+          const close = scanCode(i + 1, true);
+          i = close + 1;
+          jsxText = true;
+        } else {
+          if (c !== "\n") skeleton[i] = " ";
+          i++;
+        }
+      } else if (!jsxTag && c === "<" && startsJsxTag(i)) {
+        jsxTag = true;
+        closingJsxTag = d === "/";
+        i++;
+      } else if (jsxTag && c === "{") {
+        const close = scanCode(i + 1, true);
+        i = close + 1;
+      } else if (jsxTag && c === ">") {
+        const before = text.slice(0, i).trimEnd();
+        const selfClosing = before.endsWith("/");
+        if (closingJsxTag) jsxDepth--;
+        else if (!selfClosing) jsxDepth++;
+        jsxTag = false;
+        jsxText = jsxDepth > 0;
+        i++;
+      } else if (c === "/" && d === "/") {
         const nl = text.indexOf("\n", i);
         const end = nl < 0 ? n : nl;
         blank(code, i, end);

@@ -19,9 +19,8 @@ export function resolveImport(fromPath, specifier) {
 const STATEMENT_KEYWORD = /(?<![.\w$])(?:import|export)\b/g;
 
 /**
- * True when the statement a `from` at `offset` belongs to is `import type …` / `export type …`: the
- * nearest preceding import/export keyword is directly followed by `type`. `import { type A }` and
- * `import typeFoo` are not type-only, and `import type from "x"` is a default import named `type`.
+ * True when the statement a `from` at `offset` is erased at runtime. This includes `import type …` /
+ * `export type …`, and named imports/exports where every specifier has the inline `type` modifier.
  */
 function isTypeOnly(skeleton, keywords, offset) {
   let keyword;
@@ -30,8 +29,11 @@ function isTypeOnly(skeleton, keywords, offset) {
     keyword = k;
   }
   if (keyword === undefined) return false;
-  const after = skeleton.slice(keyword.index + keyword[0].length, offset);
-  return /^\s*type\b/.test(after) && !/^\s*type\s+$/.test(after);
+  const after = skeleton.slice(keyword.index + keyword[0].length, offset).trim();
+  if (after !== "type" && /^type\b/.test(after)) return true;
+  if (!after.startsWith("{") || !after.endsWith("}")) return false;
+  const specifiers = after.slice(1, -1).split(",").map((specifier) => specifier.trim()).filter(Boolean);
+  return specifiers.length > 0 && specifiers.every((specifier) => /^type\s+(?!as\b)\S/.test(specifier));
 }
 
 /**
