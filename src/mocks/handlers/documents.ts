@@ -1,12 +1,13 @@
 import { HttpResponse, http } from 'msw'
 import { createDocument, mockDocuments, mockOrganizations } from '../factories'
+import { apiUrl } from './utils'
 
 // Mutable copy for CRUD operations
 let documents = [...mockDocuments]
 
 export const documentHandlers = [
   // Upload (multipart/form-data)
-  http.post('*/documents', async ({ request }) => {
+  http.post(apiUrl('/documents'), async ({ request }) => {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
 
@@ -31,7 +32,7 @@ export const documentHandlers = [
   }),
 
   // Get metadata
-  http.get('*/documents/:id', ({ params }) => {
+  http.get(apiUrl('/documents/:id'), ({ params }) => {
     const doc = documents.find((d) => d.id === params.id)
     if (!doc) {
       return new HttpResponse(null, { status: 404 })
@@ -40,7 +41,7 @@ export const documentHandlers = [
   }),
 
   // Download (returns mock file content)
-  http.get('*/documents/:id/download', ({ params }) => {
+  http.get(apiUrl('/documents/:id/download'), ({ params }) => {
     const doc = documents.find((d) => d.id === params.id)
     if (!doc) {
       return new HttpResponse(null, { status: 404 })
@@ -57,7 +58,7 @@ export const documentHandlers = [
   }),
 
   // Delete
-  http.delete('*/documents/:id', ({ params }) => {
+  http.delete(apiUrl('/documents/:id'), ({ params }) => {
     const idx = documents.findIndex((d) => d.id === params.id)
     if (idx === -1) {
       return new HttpResponse(null, { status: 404 })

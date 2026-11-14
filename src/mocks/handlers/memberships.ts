@@ -1,13 +1,14 @@
 import { HttpResponse, http } from 'msw'
 import type { MembershipCreate, MembershipUpdate } from '@/api/types'
 import { createMembership, mockMemberships } from '../factories'
+import { apiUrl } from './utils'
 
 // Mutable copy for CRUD operations
 let memberships = [...mockMemberships]
 
 export const membershipHandlers = [
   // List (paginated)
-  http.get('*/memberships', ({ request }) => {
+  http.get(apiUrl('/memberships'), ({ request }) => {
     const url = new URL(request.url)
     const page = parseInt(url.searchParams.get('page') || '1', 10)
     const size = parseInt(url.searchParams.get('size') || '10', 10)
@@ -23,7 +24,7 @@ export const membershipHandlers = [
   }),
 
   // Create
-  http.post('*/memberships', async ({ request }) => {
+  http.post(apiUrl('/memberships'), async ({ request }) => {
     const body = (await request.json()) as MembershipCreate
     const membership = createMembership({ ...body })
     memberships.push(membership)
@@ -31,7 +32,7 @@ export const membershipHandlers = [
   }),
 
   // Update (role only)
-  http.patch('*/memberships/:id', async ({ params, request }) => {
+  http.patch(apiUrl('/memberships/:id'), async ({ params, request }) => {
     const idx = memberships.findIndex((m) => m.id === params.id)
     if (idx === -1) {
       return new HttpResponse(null, { status: 404 })
@@ -59,7 +60,7 @@ export const membershipHandlers = [
   }),
 
   // Delete
-  http.delete('*/memberships/:id', ({ params }) => {
+  http.delete(apiUrl('/memberships/:id'), ({ params }) => {
     const idx = memberships.findIndex((m) => m.id === params.id)
     if (idx === -1) {
       return new HttpResponse(null, { status: 404 })

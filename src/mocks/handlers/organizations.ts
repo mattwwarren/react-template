@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw'
 import { z } from 'zod'
 import { createOrganization, mockOrganizations } from '../factories'
-import { extractPaginationFromUrl, paginateArray } from './utils'
+import { apiUrl, extractPaginationFromUrl, paginateArray } from './utils'
 
 // Validation schemas for request bodies
 const OrganizationCreateSchema = z.object({
@@ -17,7 +17,7 @@ let organizations = [...mockOrganizations]
 
 export const organizationHandlers = [
   // List (paginated)
-  http.get('*/organizations', ({ request }) => {
+  http.get(apiUrl('/organizations'), ({ request }) => {
     const url = new URL(request.url)
     const { page, size } = extractPaginationFromUrl(url)
 
@@ -25,7 +25,7 @@ export const organizationHandlers = [
   }),
 
   // Get single
-  http.get('*/organizations/:id', ({ params }) => {
+  http.get(apiUrl('/organizations/:id'), ({ params }) => {
     const org = organizations.find((o) => o.id === params.id)
     if (!org) {
       return new HttpResponse(null, { status: 404 })
@@ -34,7 +34,7 @@ export const organizationHandlers = [
   }),
 
   // Create
-  http.post('*/organizations', async ({ request }) => {
+  http.post(apiUrl('/organizations'), async ({ request }) => {
     const body = await request.json()
     const result = OrganizationCreateSchema.safeParse(body)
 
@@ -51,7 +51,7 @@ export const organizationHandlers = [
   }),
 
   // Update
-  http.patch('*/organizations/:id', async ({ params, request }) => {
+  http.patch(apiUrl('/organizations/:id'), async ({ params, request }) => {
     const idx = organizations.findIndex((o) => o.id === params.id)
     if (idx === -1) {
       return new HttpResponse(null, { status: 404 })
@@ -86,7 +86,7 @@ export const organizationHandlers = [
   }),
 
   // Delete
-  http.delete('*/organizations/:id', ({ params }) => {
+  http.delete(apiUrl('/organizations/:id'), ({ params }) => {
     const idx = organizations.findIndex((o) => o.id === params.id)
     if (idx === -1) {
       return new HttpResponse(null, { status: 404 })

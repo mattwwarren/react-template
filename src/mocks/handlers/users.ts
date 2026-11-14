@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw'
 import { z } from 'zod'
 import { createUser, mockUsers } from '../factories'
-import { extractPaginationFromUrl, paginateArray } from './utils'
+import { apiUrl, extractPaginationFromUrl, paginateArray } from './utils'
 
 // Validation schemas for request bodies
 const UserCreateSchema = z.object({
@@ -19,7 +19,7 @@ let users = [...mockUsers]
 
 export const userHandlers = [
   // List (paginated)
-  http.get('*/users', ({ request }) => {
+  http.get(apiUrl('/users'), ({ request }) => {
     const url = new URL(request.url)
     const { page, size } = extractPaginationFromUrl(url)
 
@@ -27,7 +27,7 @@ export const userHandlers = [
   }),
 
   // Get single
-  http.get('*/users/:id', ({ params }) => {
+  http.get(apiUrl('/users/:id'), ({ params }) => {
     const user = users.find((u) => u.id === params.id)
     if (!user) {
       return new HttpResponse(null, { status: 404 })
@@ -36,7 +36,7 @@ export const userHandlers = [
   }),
 
   // Create
-  http.post('*/users', async ({ request }) => {
+  http.post(apiUrl('/users'), async ({ request }) => {
     const body = await request.json()
     const result = UserCreateSchema.safeParse(body)
 
@@ -53,7 +53,7 @@ export const userHandlers = [
   }),
 
   // Update
-  http.patch('*/users/:id', async ({ params, request }) => {
+  http.patch(apiUrl('/users/:id'), async ({ params, request }) => {
     const idx = users.findIndex((u) => u.id === params.id)
     if (idx === -1) {
       return new HttpResponse(null, { status: 404 })
@@ -89,7 +89,7 @@ export const userHandlers = [
   }),
 
   // Delete
-  http.delete('*/users/:id', ({ params }) => {
+  http.delete(apiUrl('/users/:id'), ({ params }) => {
     const idx = users.findIndex((u) => u.id === params.id)
     if (idx === -1) {
       return new HttpResponse(null, { status: 404 })
