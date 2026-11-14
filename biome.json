@@ -70,7 +70,6 @@
       "!**/.claude/review-verdict.json",
       "!**/.claude/review-verdict.md",
       "!.cw",
-      "!**/.cw/tmp",
       "!scripts/**/*.mjs"
     ]
   }

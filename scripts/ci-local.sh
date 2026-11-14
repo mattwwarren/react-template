@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The merge gate. Runs every check in order, fails fast, names the step that failed.
-# CI runs this same script, so local and CI cannot drift. Written by the agentic-ui-harness
-# skill: edit the project steps freely, never loosen a harness step.
+# CI runs this same script, so local and CI cannot drift. Written by the maintainer's global
+# agentic-ui-harness skill: edit the project steps freely, never loosen a harness step.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
