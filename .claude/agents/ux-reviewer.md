@@ -27,8 +27,11 @@ commands one at a time. Never commit, push or stash.
 6. Run `npm run test:e2e`. Then read every screenshot under `test-results/` that the change touched and describe
    what each shows. A screenshot you did not open counts as unverified. If the suite cannot run, say so
    plainly and mark visual findings unverified; do not guess.
-7. If the repo has specialist reviewers (for example accessibility, component or styling reviewers under
-   `.claude/agents/`), say which apply and defer their checklist to them rather than repeating it.
+7. Name the specialist reviewers that apply to the change, and defer their checklists to them rather than repeating
+   them: `.claude/agents/accessibility-reviewer.md` (WCAG 2.1 AA, semantics, keyboard), `.claude/agents/component-reviewer.md`
+   (React component quality and hooks) and `.claude/agents/tailwind-reviewer.md` (Tailwind CSS and shadcn/ui styling).
+   This agent is read-only, so "defer" means naming the applicable specialists in your report so the caller runs them;
+   do not run them yourself. `UX-CONVENTIONS.md`, `docs/ux-baseline.md` and the gates win over a specialist's examples.
 
 ## Report
 
