@@ -39,18 +39,21 @@ The operator describes features as product behaviour. Everything technical is yo
    `assertAccessible(page, "<label>")` from `tests/e2e/support/axe.mjs` for each new surface or state (dialog, menu,
    drawer open), and save a screenshot for every state worth looking at
    (`page.screenshot({ path: "test-results/<name>/<state>.png" })`: default, empty, error, long content,
-   focused). Put pure decisions in a plain module with a unit test written first. Run them and watch them
-   **fail for the right reason** (the missing behaviour, not a typo).
-5. **Implement** in small single-purpose modules. Tokens only. Every file under the size budget. Semantic
+   focused). Put pure decisions in a plain module with a unit test written first.
+5. **Run the new spec and watch it fail. This is a gate.** Before you create or edit any file under `src/`, run
+   the new spec (and any new unit test) and confirm it fails for the right reason: the missing behaviour, not
+   a typo, a wrong selector or a setup error. Record the failing assertion in your report. Do not start
+   implementing until you have seen it fail.
+6. **Implement** in small single-purpose modules. Tokens only. Every file under the size budget. Semantic
    elements, accessible names, visible focus, targets of at least 24x24 px, a keyboard route for every
    action, focus returned to the invoking control when a menu or dialog closes. Cover loading, empty, error
    and disconnected states where they apply.
-6. **Run `npm run test:e2e`** (and `npm test` for logic changes). Then **read every screenshot your change touched**
+7. **Run `npm run test:e2e`** (and `npm test` for logic changes). Then **read every screenshot your change touched**
    with the Read tool and describe what you see: layout, truncation, overlap, contrast, focus ring. A
    screenshot you did not open is unverified. If it looks wrong, fix it and rerun even though the test passed.
-7. **Run `scripts/ci-local.sh`** until it prints `GATE PASSED`. Fix the cause of a failure; never loosen or suppress
+8. **Run `scripts/ci-local.sh`** until it prints `GATE PASSED`. Fix the cause of a failure; never loosen or suppress
    the check.
-8. **Report**: the acceptance criteria and where each is tested; the screenshots you read and what they
+9. **Report**: the acceptance criteria and where each is tested; the screenshots you read and what they
    showed; keyboard and accessibility evidence (axe scan labels, keys exercised); what you reused;
    conventions you added; and **what you did not verify**. Do not claim usability or accessibility from code
    inspection alone.
