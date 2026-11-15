@@ -71,7 +71,7 @@ test.describe('Accessibility', () => {
     await assertAccessible(page, 'documents-upload-dialog')
   })
 
-  // Unscoped first (plan A2). If axe reports aria-hidden-focus on the app root, scope to the listbox.
+  // Radix hides the app root while the select is open; scope to the listbox to avoid aria-hidden-focus there.
   test('documents-upload-select-open', async ({ page }) => {
     await page.goto('/documents')
     await expect(page.getByRole('heading', { name: /documents/i })).toBeVisible()
@@ -79,8 +79,9 @@ test.describe('Accessibility', () => {
     await expect(page.getByRole('dialog')).toBeVisible()
     await page.getByRole('combobox').click()
     await expect(page.getByRole('option')).toHaveCount(5) // 5 mock organizations
+    await expect(page.locator('[role="listbox"]')).toHaveCount(1)
     await page.screenshot({ path: 'test-results/a11y-documents-upload-select-open.png' })
-    await assertAccessible(page, 'documents-upload-select-open')
+    await assertAccessible(page, 'documents-upload-select-open', { within: '[role="listbox"]' })
   })
 
   test('user-menu', async ({ page }) => {
