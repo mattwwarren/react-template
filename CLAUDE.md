@@ -207,6 +207,7 @@ It is read-only, so it names the applicable specialists for you to run: `.claude
 `docs/ux-baseline.md` and the gates win over a specialist's examples.
 Never raise a ratchet file, add an axe allowlist entry, or add a suppression comment without the operator's
 explicit approval.
+Before creating or editing any file under `src/`, run the new spec and confirm it fails for the right reason.
 
 ## Testing Guidelines
 
