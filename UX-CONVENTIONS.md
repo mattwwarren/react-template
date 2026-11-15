@@ -21,4 +21,4 @@ overrides. Every convention here has a test, named in parentheses; a convention 
 Conventions above or in the baseline that the app does not yet implement. Each line is tagged with the work
 that delivers it; that work deletes its own line when it lands.
 
-- Destructive-colour contrast, and the four axe scans held out (#45).
+- Dark-theme destructive colour pairs cannot both reach 4.5:1 with one value, and no dark-mode switch exists yet (#50).
