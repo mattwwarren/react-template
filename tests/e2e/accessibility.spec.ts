@@ -131,4 +131,80 @@ test.describe('Accessibility', () => {
       within: 'main a[href="/organizations"]',
     })
   })
+
+  // Destructive-colour states. Acceptance criteria:
+  // - error text and labels, the destructive Delete buttons and the destructive menu item reach 4.5:1;
+  // - every state is scanned with its own label, after a screenshot, with no allowlist entry.
+  // Radix hides the app root while a dialog or menu is open, so those scans are scoped to the overlay.
+  test('users-create-dialog-errors', async ({ page }) => {
+    await page.goto('/users')
+    await expect(page.getByRole('table')).toBeVisible()
+    await page.getByRole('button', { name: /create user/i }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    // Submit the empty form so the validation messages render in the destructive colour.
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: /create user/i })
+      .click()
+    await expect(page.getByText('Name is required')).toBeVisible()
+    await expect(page.getByText('Invalid email address')).toBeVisible()
+    await expect(page.locator('[role="dialog"]')).toHaveCount(1)
+    await page.screenshot({ path: 'test-results/a11y-users-create-dialog-errors.png' })
+    await assertAccessible(page, 'users-create-dialog-errors', { within: '[role="dialog"]' })
+  })
+
+  test('user-detail', async ({ page }) => {
+    await page.goto('/users')
+    await expect(page.getByRole('table')).toBeVisible()
+    await page.waitForSelector('table tbody tr')
+    await page.locator('table tbody tr').first().locator('a').first().click()
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible()
+    await expect(page.locator('.animate-pulse')).toHaveCount(0)
+    await page.screenshot({ path: 'test-results/a11y-user-detail.png' })
+    await assertAccessible(page, 'user-detail')
+  })
+
+  test('organization-detail', async ({ page }) => {
+    await page.goto('/organizations')
+    await expect(page.getByRole('table')).toBeVisible()
+    await page.waitForSelector('table tbody tr')
+    await page.locator('table tbody tr').first().locator('a').first().click()
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible()
+    await expect(page.locator('.animate-pulse')).toHaveCount(0)
+    await page.screenshot({ path: 'test-results/a11y-organization-detail.png' })
+    await assertAccessible(page, 'organization-detail')
+  })
+
+  test('delete-confirm-dialog', async ({ page }) => {
+    await page.goto('/users')
+    await expect(page.getByRole('table')).toBeVisible()
+    await page.waitForSelector('table tbody tr')
+    await page
+      .locator('table tbody tr')
+      .first()
+      .getByRole('button', { name: /open menu/i })
+      .click()
+    await page.getByRole('menuitem', { name: /delete/i }).click()
+    await expect(page.getByRole('alertdialog')).toBeVisible()
+    await expect(page.locator('[role="alertdialog"]')).toHaveCount(1)
+    await page.screenshot({ path: 'test-results/a11y-delete-confirm-dialog.png' })
+    await assertAccessible(page, 'delete-confirm-dialog', { within: '[role="alertdialog"]' })
+  })
+
+  test('users-row-actions-menu', async ({ page }) => {
+    await page.goto('/users')
+    await expect(page.getByRole('table')).toBeVisible()
+    await page.waitForSelector('table tbody tr')
+    await page
+      .locator('table tbody tr')
+      .first()
+      .getByRole('button', { name: /open menu/i })
+      .click()
+    await expect(page.getByRole('menu')).toBeVisible()
+    await expect(page.locator('[role="menu"]')).toHaveCount(1)
+    await page.screenshot({ path: 'test-results/a11y-users-row-actions-menu.png' })
+    await assertAccessible(page, 'users-row-actions-menu', { within: '[role="menu"]' })
+  })
 })
