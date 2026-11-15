@@ -297,6 +297,21 @@ else
     echo -e "${RED}  ERROR: _tasks.py not found${NC}"
 fi
 
+# Verify the harness UI files survive templatizing byte-for-byte (not renamed to .jinja, not rewritten)
+HARNESS_PATHS=(.claude/skills/ui-change/SKILL.md .claude/agents/ux-reviewer.md UX-CONVENTIONS.md docs/ux-baseline.md harness.lock harness.config.json)
+HARNESS_FAILED=0
+for rel in "${HARNESS_PATHS[@]}"; do
+    if [[ -f "${OUTPUT_DIR}/${rel}" ]] && cmp -s "${PROJECT_ROOT}/${rel}" "${OUTPUT_DIR}/${rel}"; then
+        echo "  Preserved: ${rel}"
+    else
+        echo -e "${RED}  ERROR: ${rel} missing, renamed or altered in output${NC}"
+        HARNESS_FAILED=1
+    fi
+done
+if [[ "${HARNESS_FAILED}" -ne 0 ]]; then
+    exit 1
+fi
+
 # Step 7: Verify no remaining hardcoded references
 echo -e "${GREEN}[7/7] Checking for remaining react-template references...${NC}"
 
