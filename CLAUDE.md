@@ -194,6 +194,20 @@ export function ProtectedRoute() {
 - No implicit any
 - Strict null checks
 
+## Interface development and review
+
+Read [ARCHITECTURE.md](./ARCHITECTURE.md), [UX-CONVENTIONS.md](./UX-CONVENTIONS.md) and
+[docs/ux-baseline.md](./docs/ux-baseline.md) before planning, implementing or reviewing any change under
+`src/`, including small additions. Treat them as acceptance criteria. Then follow the change loop in
+[.claude/skills/ui-change/SKILL.md](./.claude/skills/ui-change/SKILL.md) (a plain file): restate the request
+as acceptance criteria, reuse before inventing, write the e2e flow first, read the screenshots, run
+`scripts/ci-local.sh`, and report what was and was not verified. Reviews use `.claude/agents/ux-reviewer.md`.
+It is read-only, so it names the applicable specialists for you to run: `.claude/agents/accessibility-reviewer.md`,
+`.claude/agents/component-reviewer.md` and `.claude/agents/tailwind-reviewer.md`. `UX-CONVENTIONS.md`,
+`docs/ux-baseline.md` and the gates win over a specialist's examples.
+Never raise a ratchet file, add an axe allowlist entry, or add a suppression comment without the operator's
+explicit approval.
+
 ## Testing Guidelines
 
 ### Unit Tests (Vitest)

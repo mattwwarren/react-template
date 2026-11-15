@@ -15,7 +15,8 @@ This directory contains Claude Code configuration for the react-template project
 │   ├── performance-reviewer.md
 │   ├── api-integration-reviewer.md
 │   ├── accessibility-reviewer.md
-│   └── tailwind-reviewer.md
+│   ├── tailwind-reviewer.md
+│   └── ux-reviewer.md
 ├── commands/               # Custom slash commands
 │   ├── react-implement.md
 │   ├── react-component.md
@@ -37,7 +38,7 @@ This directory contains Claude Code configuration for the react-template project
 - ~100x faster than ESLint + Prettier
 - Non-blocking (continues even with unfixable violations)
 
-### Agents (6 total)
+### Agents (7 total)
 
 | Agent | Focus |
 |-------|-------|
@@ -47,6 +48,7 @@ This directory contains Claude Code configuration for the react-template project
 | `api-integration-reviewer` | TanStack Query + MSW patterns |
 | `accessibility-reviewer` | WCAG 2.1 AA compliance |
 | `tailwind-reviewer` | Tailwind CSS + shadcn/ui patterns |
+| `ux-reviewer` | Read-only review of `src/` changes against UX conventions, gates and screenshots; names specialist reviewers to run |
 
 ### Commands (4 total)
 
