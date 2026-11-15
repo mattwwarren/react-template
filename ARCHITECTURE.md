@@ -69,6 +69,8 @@ fetchApi()    src/api/client.ts — cookie credentials, X-Selected-Org
 FastAPI backend (or MSW, when VITE_USE_MOCKS=true)
 ```
 
+The diagram shows request flow; the import-order layers the gate enforces (`lib < auth < realtime < api < hooks < components < features`) are described in [The gates](#the-gates).
+
 ### Component placement rule
 
 - `src/components/ui/` — unmodified shadcn/ui primitives. No business
@@ -194,6 +196,88 @@ backend":
   `playwright.integration.config.ts`) — the only tier that hits a real
   backend: DevSpace port-forwards the deployed frontend in k3d
   (`devspace run integration-tests`), serial workers, no `webServer`.
+
+## The gates
+
+`scripts/ci-local.sh` is the merge gate and CI runs the same script. It fails fast and names the step. The tier is `tier`
+in `harness.config.json` (`t1` or `t2`); steps marked "(tier 2 only)" do not exist in tier 1. What each step protects:
+- `no suppression comments`: a suppressed checker is a disabled instrument. No `@ts-ignore`, `biome-ignore`,
+  `eslint-disable`, `# noqa`, ... without operator approval. `suppressions.excludePrefixes` in
+  `harness.config.json` lists vendored or generated third-party files the scan skips (an exact file path, or a
+  directory ending in `/`); it is never for app code, and widening it to get green is forbidden. Everything
+  else is scanned, `scripts/` included; the only other exclusions are the harness's own
+  `scripts/check-no-suppressions.sh` and `scripts/test/gate-suppressions.test.mjs` (they hold the marker strings).
+- `size budget`: every source file <= the configured limit. `scripts/size-budget.json` records the line count of
+  each file that was already over. Such a file may only shrink (compared with the merge base); when it shrinks,
+  its entry must be lowered to the new count, and when it drops under the limit (or is deleted) its entry must
+  be removed. New files get no exemption: split by responsibility.
+- `layering`: layers, lowest first: lib < auth < realtime < api < hooks < components < features (`harness.config.json`). A layer imports itself and layers
+  to its left. `node scripts/check-layering.mjs --matrix` shows which layer imports which.
+- `import cycles`: cycles among the files under `cycles.scopePrefixes` are recorded by size in
+  `scripts/import-cycles.json`, shrink-only against the merge base. `node scripts/check-import-cycles.mjs --list`
+  prints the modules of each cycle.
+- `design tokens` (tier 2 only): raw design values live only in the token file(s) (`tokens.tokenFiles`, here
+  `src/index.css`); everything else under `tokens.scopePrefixes` references them. The gate flags, outside the
+  token file(s):
+  - raw colours (hex, `rgb()`/`hsl()`/`oklch()` and the other colour functions, named colours) in CSS and in
+    JS strings, `font-size` in px, and `z-index` numbers;
+  - Tailwind arbitrary values holding a raw colour, font size or z-index (`text-[#fff]`, `text-[13px]`,
+    `z-[999]`), and, when `tokens.forbidPaletteClasses` is true, default-palette classes (`bg-blue-500`);
+  - DOM writes such as `el.style.color = ...`, `setAttribute('style', ...)`, and inline `style=` attributes in
+    strings or HTML;
+  - the JSX `style` prop unless it is an object literal whose keys are computed geometry (`left`, `top`,
+    `width`, `height`, `transform`, `flex`, ...) or `--custom` properties.
+
+  (`scripts/lib/design-tokens.mjs`, `css-scan.mjs`, `tailwind-scan.mjs`.)
+- `ratchets` (tier 2 only): the axe allowlist (`axe.allowlist` in `harness.config.json`) may only lose entries
+  relative to the merge base.
+- `harness gate tests`: the gates' own tests (`scripts/test/`).
+- the project's own steps (types, lint, unit tests, `npm run test:e2e` with an axe scan on each new surface).
+
+Ratchet files are compared with the merge base (`baseRef` in `harness.config.json`, default `origin/main`; it
+must be a remote-tracking ref, so `HEAD`, `HEAD~n` and local branch names are config errors); CI must check out
+full history (`fetch-depth: 0`) or the gates fail closed. `harness.config.json` is compared with the merge base
+too (`size`, `import cycles` and, in tier 2, `ratchets` each report it): a changed `baseRef` or `axe.allowlist`,
+a higher `size.limit`, a longer exclude or exempt list (`size.excludePrefixes`, `tokens.exemptPrefixes`,
+`tokens.tokenFiles`, `suppressions.excludePrefixes`, `layering.ignoreImporters`), a shorter scan scope, or a
+check switched off is a finding. Loosening one on purpose is its own reviewed change on the default branch.
+
+### When a gate cannot run
+
+A gate that cannot do its check exits 2, and that fails the gate; it never passes. Typical causes: a ratchet
+file or the axe allowlist is missing or malformed, `harness.config.json` is invalid or a scope list is empty
+(`tokens.tokenFiles`, `tokens.scopePrefixes`, `layering.layers`, `imports.sourceGlobs`, `cycles.scopePrefixes`),
+a scope matched no files, or there is no merge base (a shallow clone, or `baseRef` not fetched). Fix the
+configuration or the checkout. Never remove the step to get green.
+
+### Setting up ratchets
+
+Run `node scripts/bootstrap.mjs` once, when the gates are installed. It records the current debt (over-budget
+files, import cycles, and in tier 2 an empty axe allowlist) so the gates start green and can only tighten. It
+never overwrites an existing ratchet file, and it refuses to record a scope it could not measure (no files, an
+empty import graph); an unconfigured cycles gate gets no file. Commit its output together with the install.
+The merge-base comparison cannot see the first commit of a ratchet file, so review that no recorded count is
+higher than the code's real count.
+
+### Known gaps in the gates
+
+- Token gate, Tailwind classes: named colours inside arbitrary values (`bg-[red]`); font sizes written as
+  `text-[length:13px]`, `text-[calc(...)]` or `clamp(...)`, and `z-[calc(...)]`; classes assembled from
+  fragments at run time.
+- Token gate, style: an object literal given to the JSX `style` prop is checked key by key, and a variable or
+  a spread there is reported, but a prop written with spaces around the `=` (`style = ...`) is not seen at all.
+- Token gate, CSS and markup: a named colour is caught only inside CSS declarations (not in an attribute such
+  as `fill="red"`; hex and colour functions are caught in any string); font sizes are caught in px only (not
+  `rem`/`em`); `z-index: calc(...)` is not caught. It can flag an unquoted CSS value that merely contains a
+  colour word, or a hex-shaped word in a string.
+- The import scanner decides what is a regex literal heuristically; JSX text with apostrophes confuses it only
+  on that line.
+- A ratchet file absent at the merge base is created freely (bootstrap), so on a long-lived branch a count could
+  rise before the first merge. Review the bootstrap commit by hand. The same holds for `harness.config.json`.
+- The gates run locally, and the merge base is only as trustworthy as the ref it is taken against: anyone with
+  local git access can move `refs/remotes/origin/main` (`git update-ref`) or point a remote-tracking ref at their
+  own work, and a local run then compares the files with themselves. The CI run on a fresh checkout
+  (`fetch-depth: 0`) is the authoritative check.
 
 ## Deployment
 
