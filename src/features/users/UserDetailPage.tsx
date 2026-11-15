@@ -55,7 +55,7 @@ export function UserDetailPage(): React.ReactElement {
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link to="/users">
+            <Link to="/users" aria-label="Back to users">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -77,7 +77,7 @@ export function UserDetailPage(): React.ReactElement {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link to="/users">
+            <Link to="/users" aria-label="Back to users">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>

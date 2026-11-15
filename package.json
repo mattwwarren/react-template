@@ -52,6 +52,7 @@
   },
   "//biome": "@biomejs/biome pinned exact — minor releases expand the default ruleset; bump deliberately and fix findings in the same change (see #7)",
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@biomejs/biome": "2.5.14",
     "@faker-js/faker": "^10.2.0",
     "@playwright/test": "^1.57.0",
