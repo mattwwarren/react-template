@@ -1,9 +1,33 @@
-import { test as unauthenticatedTest } from '@playwright/test'
+import { type Page, test as unauthenticatedTest } from '@playwright/test'
 import { assertAccessible } from './support/axe.mjs'
 import { expect, test } from './utils/fixtures'
 
 // Each test title is its scan label; the same label names the screenshot and the axe allowlist entry.
 // Scoped scans are preceded by a one-match guard so a selector that matches nothing cannot pass vacuously.
+
+// Sets the dark theme on <html>. A page.goto reload drops the class; SPA clicks do not.
+// Waits for finite CSS transitions and animations (colour transitions on buttons, menu items and
+// dialogs) to settle, so the screenshot and the axe scan read final colours, not mid-fade values.
+// Infinite animations are excluded so the wait cannot hang.
+async function enableDarkTheme(page: Page) {
+  await page.evaluate(() => document.documentElement.classList.add('dark'))
+  await expect(page.locator('html')).toHaveClass(/dark/)
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+        .map((a) => a.finished)
+    )
+  )
+}
+
+// Asserts the page's theme matches the scan title: dark for `-dark`, light otherwise. It sits outside the
+// `if (dark)` setter, so a dropped enableDarkTheme call fails here instead of silently scanning light.
+async function expectScheme(page: Page, dark: boolean) {
+  await expect(page.locator('html')).toHaveClass(dark ? /\bdark\b/ : /^(?!.*\bdark\b)/)
+}
+
 test.describe('Accessibility', () => {
   unauthenticatedTest('login', async ({ page }) => {
     await page.goto('/login')
@@ -133,78 +157,98 @@ test.describe('Accessibility', () => {
   })
 
   // Destructive-colour states. Acceptance criteria:
-  // - error text and labels, the destructive Delete buttons and the destructive menu item reach 4.5:1;
+  // - error text and labels, the destructive Delete buttons and the destructive menu item reach 4.5:1
+  //   in the light and dark themes;
   // - every state is scanned with its own label, after a screenshot, with no allowlist entry.
   // Radix hides the app root while a dialog or menu is open, so those scans are scoped to the overlay.
-  test('users-create-dialog-errors', async ({ page }) => {
-    await page.goto('/users')
-    await expect(page.getByRole('table')).toBeVisible()
-    await page.getByRole('button', { name: /create user/i }).click()
-    await expect(page.getByRole('dialog')).toBeVisible()
-    // Submit the empty form so the validation messages render in the destructive colour.
-    await page
-      .getByRole('dialog')
-      .getByRole('button', { name: /create user/i })
-      .click()
-    await expect(page.getByText('Name is required')).toBeVisible()
-    await expect(page.getByText('Invalid email address')).toBeVisible()
-    await expect(page.locator('[role="dialog"]')).toHaveCount(1)
-    await page.screenshot({ path: 'test-results/a11y-users-create-dialog-errors.png' })
-    await assertAccessible(page, 'users-create-dialog-errors', { within: '[role="dialog"]' })
-  })
+  // Each state runs twice: light (unchanged titles and labels) and a `-dark` sibling with the dark class set.
+  for (const dark of [false, true]) {
+    const sfx = dark ? '-dark' : ''
 
-  test('user-detail', async ({ page }) => {
-    await page.goto('/users')
-    await expect(page.getByRole('table')).toBeVisible()
-    await page.waitForSelector('table tbody tr')
-    await page.locator('table tbody tr').first().locator('a').first().click()
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible()
-    await expect(page.locator('.animate-pulse')).toHaveCount(0)
-    await page.screenshot({ path: 'test-results/a11y-user-detail.png' })
-    await assertAccessible(page, 'user-detail')
-  })
+    test(`users-create-dialog-errors${sfx}`, async ({ page }) => {
+      await page.goto('/users')
+      await expect(page.getByRole('table')).toBeVisible()
+      await page.getByRole('button', { name: /create user/i }).click()
+      await expect(page.getByRole('dialog')).toBeVisible()
+      // Submit the empty form so the validation messages render in the destructive colour.
+      await page
+        .getByRole('dialog')
+        .getByRole('button', { name: /create user/i })
+        .click()
+      await expect(page.getByText('Name is required')).toBeVisible()
+      await expect(page.getByText('Invalid email address')).toBeVisible()
+      await expect(page.locator('[role="dialog"]')).toHaveCount(1)
+      if (dark) await enableDarkTheme(page)
+      await expectScheme(page, dark)
+      await page.screenshot({ path: `test-results/a11y-users-create-dialog-errors${sfx}.png` })
+      await assertAccessible(page, `users-create-dialog-errors${sfx}`, {
+        within: '[role="dialog"]',
+      })
+    })
 
-  test('organization-detail', async ({ page }) => {
-    await page.goto('/organizations')
-    await expect(page.getByRole('table')).toBeVisible()
-    await page.waitForSelector('table tbody tr')
-    await page.locator('table tbody tr').first().locator('a').first().click()
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible()
-    await expect(page.locator('.animate-pulse')).toHaveCount(0)
-    await page.screenshot({ path: 'test-results/a11y-organization-detail.png' })
-    await assertAccessible(page, 'organization-detail')
-  })
+    test(`user-detail${sfx}`, async ({ page }) => {
+      await page.goto('/users')
+      await expect(page.getByRole('table')).toBeVisible()
+      await page.waitForSelector('table tbody tr')
+      await page.locator('table tbody tr').first().locator('a').first().click()
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible()
+      await expect(page.locator('.animate-pulse')).toHaveCount(0)
+      if (dark) await enableDarkTheme(page)
+      await expectScheme(page, dark)
+      await page.screenshot({ path: `test-results/a11y-user-detail${sfx}.png` })
+      await assertAccessible(page, `user-detail${sfx}`)
+    })
 
-  test('delete-confirm-dialog', async ({ page }) => {
-    await page.goto('/users')
-    await expect(page.getByRole('table')).toBeVisible()
-    await page.waitForSelector('table tbody tr')
-    await page
-      .locator('table tbody tr')
-      .first()
-      .getByRole('button', { name: /open menu/i })
-      .click()
-    await page.getByRole('menuitem', { name: /delete/i }).click()
-    await expect(page.getByRole('alertdialog')).toBeVisible()
-    await expect(page.locator('[role="alertdialog"]')).toHaveCount(1)
-    await page.screenshot({ path: 'test-results/a11y-delete-confirm-dialog.png' })
-    await assertAccessible(page, 'delete-confirm-dialog', { within: '[role="alertdialog"]' })
-  })
+    test(`organization-detail${sfx}`, async ({ page }) => {
+      await page.goto('/organizations')
+      await expect(page.getByRole('table')).toBeVisible()
+      await page.waitForSelector('table tbody tr')
+      await page.locator('table tbody tr').first().locator('a').first().click()
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible()
+      await expect(page.locator('.animate-pulse')).toHaveCount(0)
+      if (dark) await enableDarkTheme(page)
+      await expectScheme(page, dark)
+      await page.screenshot({ path: `test-results/a11y-organization-detail${sfx}.png` })
+      await assertAccessible(page, `organization-detail${sfx}`)
+    })
 
-  test('users-row-actions-menu', async ({ page }) => {
-    await page.goto('/users')
-    await expect(page.getByRole('table')).toBeVisible()
-    await page.waitForSelector('table tbody tr')
-    await page
-      .locator('table tbody tr')
-      .first()
-      .getByRole('button', { name: /open menu/i })
-      .click()
-    await expect(page.getByRole('menu')).toBeVisible()
-    await expect(page.locator('[role="menu"]')).toHaveCount(1)
-    await page.screenshot({ path: 'test-results/a11y-users-row-actions-menu.png' })
-    await assertAccessible(page, 'users-row-actions-menu', { within: '[role="menu"]' })
-  })
+    test(`delete-confirm-dialog${sfx}`, async ({ page }) => {
+      await page.goto('/users')
+      await expect(page.getByRole('table')).toBeVisible()
+      await page.waitForSelector('table tbody tr')
+      await page
+        .locator('table tbody tr')
+        .first()
+        .getByRole('button', { name: /open menu/i })
+        .click()
+      await page.getByRole('menuitem', { name: /delete/i }).click()
+      await expect(page.getByRole('alertdialog')).toBeVisible()
+      await expect(page.locator('[role="alertdialog"]')).toHaveCount(1)
+      if (dark) await enableDarkTheme(page)
+      await expectScheme(page, dark)
+      await page.screenshot({ path: `test-results/a11y-delete-confirm-dialog${sfx}.png` })
+      await assertAccessible(page, `delete-confirm-dialog${sfx}`, {
+        within: '[role="alertdialog"]',
+      })
+    })
+
+    test(`users-row-actions-menu${sfx}`, async ({ page }) => {
+      await page.goto('/users')
+      await expect(page.getByRole('table')).toBeVisible()
+      await page.waitForSelector('table tbody tr')
+      await page
+        .locator('table tbody tr')
+        .first()
+        .getByRole('button', { name: /open menu/i })
+        .click()
+      await expect(page.getByRole('menu')).toBeVisible()
+      await expect(page.locator('[role="menu"]')).toHaveCount(1)
+      if (dark) await enableDarkTheme(page)
+      await expectScheme(page, dark)
+      await page.screenshot({ path: `test-results/a11y-users-row-actions-menu${sfx}.png` })
+      await assertAccessible(page, `users-row-actions-menu${sfx}`, { within: '[role="menu"]' })
+    })
+  }
 })

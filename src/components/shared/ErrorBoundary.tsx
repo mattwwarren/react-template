@@ -45,7 +45,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <Card className="w-full max-w-md">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-destructive" />
+                <AlertCircle className="h-5 w-5 text-destructive-text" />
                 <CardTitle>Something went wrong</CardTitle>
               </div>
               <CardDescription>An unexpected error occurred. Please try again.</CardDescription>
