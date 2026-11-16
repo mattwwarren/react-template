@@ -44,7 +44,7 @@ function ErrorDisplay({ error, onRetry }: { error: Error; onRetry: () => void })
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="space-y-4 text-center">
-        <p className="text-destructive">Failed to load organizations</p>
+        <p className="text-destructive-text">Failed to load organizations</p>
         <p className="text-sm text-muted-foreground">{error.message}</p>
         <Button onClick={onRetry}>Retry</Button>
       </div>

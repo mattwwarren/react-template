@@ -1,4 +1,4 @@
-import { test as unauthenticatedTest } from '@playwright/test'
+import { type Page, test as unauthenticatedTest } from '@playwright/test'
 import { assertAccessible } from './support/axe.mjs'
 import { expect, test } from './utils/fixtures'
 
@@ -6,9 +6,26 @@ import { expect, test } from './utils/fixtures'
 // Scoped scans are preceded by a one-match guard so a selector that matches nothing cannot pass vacuously.
 
 // Sets the dark theme on <html>. A page.goto reload drops the class; SPA clicks do not.
-async function enableDarkTheme(page) {
+// Waits for finite CSS transitions and animations (colour transitions on buttons, menu items and
+// dialogs) to settle, so the screenshot and the axe scan read final colours, not mid-fade values.
+// Infinite animations are excluded so the wait cannot hang.
+async function enableDarkTheme(page: Page) {
   await page.evaluate(() => document.documentElement.classList.add('dark'))
   await expect(page.locator('html')).toHaveClass(/dark/)
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+        .map((a) => a.finished)
+    )
+  )
+}
+
+// Asserts the page's theme matches the scan title: dark for `-dark`, light otherwise. It sits outside the
+// `if (dark)` setter, so a dropped enableDarkTheme call fails here instead of silently scanning light.
+async function expectScheme(page: Page, dark: boolean) {
+  await expect(page.locator('html')).toHaveClass(dark ? /\bdark\b/ : /^(?!.*\bdark\b)/)
 }
 
 test.describe('Accessibility', () => {
@@ -162,6 +179,7 @@ test.describe('Accessibility', () => {
       await expect(page.getByText('Invalid email address')).toBeVisible()
       await expect(page.locator('[role="dialog"]')).toHaveCount(1)
       if (dark) await enableDarkTheme(page)
+      await expectScheme(page, dark)
       await page.screenshot({ path: `test-results/a11y-users-create-dialog-errors${sfx}.png` })
       await assertAccessible(page, `users-create-dialog-errors${sfx}`, {
         within: '[role="dialog"]',
@@ -177,6 +195,7 @@ test.describe('Accessibility', () => {
       await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible()
       await expect(page.locator('.animate-pulse')).toHaveCount(0)
       if (dark) await enableDarkTheme(page)
+      await expectScheme(page, dark)
       await page.screenshot({ path: `test-results/a11y-user-detail${sfx}.png` })
       await assertAccessible(page, `user-detail${sfx}`)
     })
@@ -190,6 +209,7 @@ test.describe('Accessibility', () => {
       await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible()
       await expect(page.locator('.animate-pulse')).toHaveCount(0)
       if (dark) await enableDarkTheme(page)
+      await expectScheme(page, dark)
       await page.screenshot({ path: `test-results/a11y-organization-detail${sfx}.png` })
       await assertAccessible(page, `organization-detail${sfx}`)
     })
@@ -207,6 +227,7 @@ test.describe('Accessibility', () => {
       await expect(page.getByRole('alertdialog')).toBeVisible()
       await expect(page.locator('[role="alertdialog"]')).toHaveCount(1)
       if (dark) await enableDarkTheme(page)
+      await expectScheme(page, dark)
       await page.screenshot({ path: `test-results/a11y-delete-confirm-dialog${sfx}.png` })
       await assertAccessible(page, `delete-confirm-dialog${sfx}`, {
         within: '[role="alertdialog"]',
@@ -225,6 +246,7 @@ test.describe('Accessibility', () => {
       await expect(page.getByRole('menu')).toBeVisible()
       await expect(page.locator('[role="menu"]')).toHaveCount(1)
       if (dark) await enableDarkTheme(page)
+      await expectScheme(page, dark)
       await page.screenshot({ path: `test-results/a11y-users-row-actions-menu${sfx}.png` })
       await assertAccessible(page, `users-row-actions-menu${sfx}`, { within: '[role="menu"]' })
     })
